@@ -152,6 +152,8 @@ Still open: battery sense, slide-switch GPIO.
 
 Mitigation in v0.1.1: background drawn as pure `#000000`. A gray-ramp test screen (About → SELECT) shows levels 0, 2, 4 … 255 to map which levels are affected before any gamma change.
 
+v0.1.1 on glass (photos `image/IMG_7775.jpg`, `image/IMG_7776.jpg`): background reads black, white/gray/yellow text correct. Mitigation `VERIFIED`. Gray-ramp photo still pending, so the exact affected levels (and a possible gamma fix) remain open; until then avoid dark non-zero fills.
+
 Why the prototype failed: it used these correct pins with an **ST7789 init** on an **NV3007** panel.
 
 ## 3. Unknowns that block Phase 1
