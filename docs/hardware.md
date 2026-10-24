@@ -109,12 +109,44 @@ I (18367) mictlan: screen links
 
 Reset quirk: software resets over USB (esptool `hard-reset`, RTS pulse) land in `boot:0x0 DOWNLOAD` on this Mac. Use the physical **RST** button to boot the app; use **BOOT held while plugging in** to enter download mode reliably.
 
+### 2.6 Pin map (recovered from the stock firmware)
+
+Source: Hazel's earlier project `github.com/hsaenzG/mictlan-js`, branch `cursor/lcd-bus-pins` (`docs/hardware.md`, `firmware/badge/main/board.h`). Two independent methods, both on the **stock** JSConf Meshtastic image (SHA-256 `0640a9ca…`), never another board:
+
+- **Stock boot log** (RST capture 2026-10-23, 115200 8N1, DTR/RTS cleared, nothing sent).
+- **Disassembly** of the stock `app0` with `xtensa-esp32s3-elf-objdump` (2026-10-24): the TFT `connect()` function's bus and panel constructors, with file offsets and instruction bytes recorded in that doc.
+
+| Signal | GPIO | Source | Tag |
+|---|---|---|---|
+| BTN UP | 40 | Stock boot log `BadgeJsconButtons: UP=40 DOWN=43 SELECT=18 BACK=1` + button table at `0xE186C` | `VERIFIED` |
+| BTN DOWN | 43 | same | `VERIFIED` |
+| BTN SELECT | 18 | same | `VERIFIED` |
+| BTN BACK | 1 | same | `VERIFIED` |
+| Button mode | `INPUT_PULLUP` (Arduino mode 5) → active **low** | Disassembly at `0x1817F0` | `VERIFIED` |
+| LCD SCK | 12 | Bus object byte 11, attached to `FSPICLK_OUT_IDX` | `VERIFIED` (disassembly) |
+| LCD MOSI | 11 | Bus object byte 12, `FSPID_OUT_IDX` | `VERIFIED` (disassembly) |
+| LCD MISO | not connected | Bus object byte 13 = `0xFF` | `VERIFIED` (disassembly) |
+| LCD CS | 21 | Bus object byte 10, idle high | `VERIFIED` (disassembly) |
+| LCD DC | 9 | Bus object byte 9, low = command | `VERIFIED` (disassembly) |
+| LCD RST | 10 | Panel object byte 68; pulse high 100 ms / low 120 ms / high 120 ms | `VERIFIED` (disassembly) |
+| LCD backlight | 2 (plain GPIO high = on; stock applies brightness 153) | `pinMode(2, OUTPUT)` + `digitalWrite` | `VERIFIED` (disassembly) |
+| LCD bus | `SPI2_HOST`, mode 0, 40 MHz | Bus init literal `40000000` | `VERIFIED` (disassembly) |
+| LCD MADCTL | `0x60` (rotation 1, MX\|MV → landscape) | Panel rotation routine | `VERIFIED` (disassembly) |
+| LCD size | 142 × 428 (panel object halfwords `8e 00 ac 01`) | Matches the NV3007 init found here independently | `VERIFIED` (two sources) |
+| LoRa SPI | SCK 37, MISO 36, MOSI 35, NSS 38 (separate bus from the LCD) | Stock boot log `SPI.begin(...)` | `VERIFIED` |
+| LoRa control | LLCC68 driver; IRQ 48, RST 47, BUSY 39 | Stock boot log `SX126xInterface(...)` | `VERIFIED` |
+
+Still open: X/Y offsets and color order (first color-fill test), battery sense, slide-switch GPIO.
+
+Why the prototype failed: it used these correct pins with an **ST7789 init** on an **NV3007** panel.
+
 ## 3. Unknowns that block Phase 1
 
 1. ~~Display controller, resolution~~ → NV3007 142×428 (firmware evidence). Offsets, color order, inversion still open.
-2. Display pin mapping: SCK, MOSI, CS, DC, RST, backlight, SPI host.
-3. Whether display and LoRa share the SPI bus; LoRa CS/RST/IRQ/BUSY pins.
-4. Front button GPIOs and active level (a working config exists in the prototype's source).
+2. ~~Display pin mapping~~ → §2.6.
+3. ~~Bus sharing~~ → separate buses (§2.6).
+4. ~~Buttons~~ → §2.6.
+7. NV3007 X/Y offsets and RGB/BGR: resolved by the first color-fill test on hardware.
 5. ~~PSRAM~~ → almost certainly none.
 6. ~~Integrity of the flash backup~~ → verified (§5).
 
