@@ -34,7 +34,9 @@ Every fact below carries a confidence tag:
 | Flash | 8 MB, Quad SPI, 3.3 V | `VERIFIED` | User's `esptool flash-id` |
 | Bootloader | ESP-IDF v5.5.5, 8 MB, 80 MHz, DIO | `VERIFIED` | User's `image-info` |
 | Module variant (N8 / N8R2 / N8R8) | ordering code not legible in photo | `UNKNOWN` | Determines PSRAM (0 / 2 MB quad / 8 MB octal) |
-| PSRAM | — | `UNKNOWN` | Critical for framebuffer strategy and LVGL decision |
+| PSRAM | eFuse `PSRAM_CAP`/`PSRAM_VENDOR` = none (no in-package PSRAM). Vendor listing says WROOM-1-**N8** (no PSRAM). Prototype boot shows only internal heap (~381 KiB) | `HYPOTHESIS` (strong): **no PSRAM**. Design must fit in ~380 KiB internal RAM |
+| Security eFuses | `SECURE_BOOT_EN` = False, `SPI_BOOT_CRYPT_CNT` = Disable, `DIS_DOWNLOAD_MODE` = False | `VERIFIED` (`espefuse summary`, 2026-10-24) |
+| Current flash content | `app0` = `mictlan_card` c79819f-dirty, built 2026-10-24 12:57, IDF 5.5.5 (not stock). Stock Meshtastic backup (`0640a9ca…`) kept by Hazel on another computer | `VERIFIED` |
 | USB | Native USB-Serial/JTAG, VID `0x303A`, PID `0x1001`, product "USB JTAG_serial debug unit" | `VERIFIED` | `ioreg` (passive) |
 | Serial port | `/dev/cu.usbmodem101` (may change) | `VERIFIED` | `ls /dev/cu.usb*` |
 
@@ -45,14 +47,19 @@ The USB serial number equals the chip's base MAC. It is intentionally not reprod
 | Item | Value | Tag |
 |---|---|---|
 | Type | Color TFT LCD, bar/stretched form factor, mounted landscape on the front | `OBSERVED` |
-| Aspect ratio | ~2.9–3.4 : 1 measured from photos (includes bezel, perspective error) | `OBSERVED` |
-| Interface | FPC flex routed to the back into a connector with silkscreen **1** and **10** → 10-contact FPC | `OBSERVED` |
-| Bus type | 10 contacts is consistent with a 4-wire SPI TFT (VCC, GND, SCK, MOSI, CS, DC, RST, BL…) but this is not proof | `HYPOTHESIS` |
-| Backlight | Q2 (SOT-23 transistor) + R3/R13/R14 sit right next to the FPC connector → likely a GPIO-switched backlight | `HYPOTHESIS` |
-| Controller | — | `UNKNOWN` |
-| Resolution | — | `UNKNOWN` |
-| Column/row offsets, color order (RGB/BGR), inversion | — | `UNKNOWN` |
-| Behavior with original firmware | Photo shows a dark olive band across the top ~30% and a purple band below, with visible scanline texture | `OBSERVED` |
+| Aspect ratio | ~2.9–3.4 : 1 measured from photos; 428/142 = 3.01 | `OBSERVED` |
+| Interface | FPC flex into a connector with silkscreen **1** and **10**; vendor page says 10-pin 0.5 mm FPC | `OBSERVED` |
+| Bus type | 4-wire SPI (stock firmware contains Arduino SPI / `spiLock` paths; NV3007 2.79" modules are SPI) | `HYPOTHESIS` (strong) |
+| Backlight | Q2 + R3/R13/R14 next to the FPC; stock firmware logs `Power to TFT Backlight` | `HYPOTHESIS` (strong) |
+| **Controller** | **NV3007, 2.79", 142×428**. The exact `nv3007_279_init_operations` byte sequence from Arduino_GFX (`ff a5`, `9a 08`, `9b 08`, `9c b0`, `9d 16`, `9e c4`, gamma pairs `6c 29`/`7c 29`/`6d 31`…) is at flash offset `0xdc1b5`, inside leftover **stock** JSConf app code (past the end of the current prototype image at `0x48e30`). No ST7789/ILI9341 init found | `VERIFIED` (firmware evidence) — final confirmation = first color-fill test |
+| Resolution | 142×428 native (428×142 landscape) | `VERIFIED` (firmware evidence) |
+| Offsets | Arduino_GFX's 2.79" profile uses col offset 12 / 14, row 0 (panel RAM wider than glass). To confirm on the glass | `HYPOTHESIS` |
+| Color order / inversion | — | `UNKNOWN` (color-fill test) |
+| Moddable support | No NV3007 driver in Moddable `modules/drivers` → native C driver required (design D2) | `VERIFIED` |
+| Behavior with stock firmware | Photo shows dark olive band + purple band | `OBSERVED` |
+| Behavior with current prototype | Screen goes white then nothing. Log: `st7789: ready 428x142 madctl 0x60 xoff 0 yoff 14 spi 40000000 Hz`. ST7789 init sent to an NV3007 panel explains the white screen | `VERIFIED` (boot log + your observation) |
+
+The prototype's numbers (428×142, offset 14, ST7789) match Meshtastic's **Hackaday Communicator** variant, a different board. Its pins (SCK 38, MOSI 21, HSPI) are **not** adopted here.
 
 Do not choose a driver by resemblance. Bar panels from different vendors use ST7789, ST7735, GC9107, NV3007, ILI9341 variants and others, each with different offsets.
 
@@ -78,18 +85,38 @@ Do not choose a driver by resemblance. Bar panels from different vendors use ST7
 
 | Button | Wiring | Tag |
 |---|---|---|
-| UP, DOWN, BACK, SELECT (front) | GPIO numbers, active level, external pull-ups | `UNKNOWN` |
+| UP, DOWN, BACK, SELECT (front) | The `mictlan_card` prototype (your earlier attempt, source on another computer) reacts correctly to presses: log shows `screen card` / `screen links` transitions on 2026-10-24. So its button GPIO config works, but the numbers are not printed | GPIOs `UNKNOWN`; a working config `VERIFIED` to exist in that source |
 | BOOT (rear) | On every ESP32-S3 design the download-mode button drives the GPIO0 strapping pin | `HYPOTHESIS` (standard practice, still to verify on this board) |
 | RST (rear) | CHIP_PU / EN | `HYPOTHESIS` |
 
+### 2.5 Boot log of the current prototype (2026-10-24, MAC redacted)
+
+```
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)
+mode:DIO, clock div:1
+I (82) cpu_start: cpu freq: 160000000 Hz
+I (82) app_init: Project name:     mictlan_card
+I (82) app_init: App version:      c79819f-dirty
+I (83) app_init: ESP-IDF:          v5.5.5
+I (84) heap_init: At 3FC98F50 len 000507C0 (321 KiB): RAM
+I (84) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (84) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (797) st7789: ready 428x142 madctl 0x60 xoff 0 yoff 14 spi 40000000 Hz
+I (817) mictlan: card running screen startup links 3
+I (8107) mictlan: screen card
+I (18367) mictlan: screen links
+```
+
+Reset quirk: software resets over USB (esptool `hard-reset`, RTS pulse) land in `boot:0x0 DOWNLOAD` on this Mac. Use the physical **RST** button to boot the app; use **BOOT held while plugging in** to enter download mode reliably.
+
 ## 3. Unknowns that block Phase 1
 
-1. Display controller, resolution, offsets, color order, inversion.
-2. Display pin mapping: SCK, MOSI, (MISO?), CS, DC, RST, backlight, SPI host.
-3. Whether display and LoRa share the SPI bus; LoRa CS/RST/IRQ pins.
-4. Front button GPIOs and active level.
-5. PSRAM presence and size.
-6. **Integrity of the flash backup** (see §5).
+1. ~~Display controller, resolution~~ → NV3007 142×428 (firmware evidence). Offsets, color order, inversion still open.
+2. Display pin mapping: SCK, MOSI, CS, DC, RST, backlight, SPI host.
+3. Whether display and LoRa share the SPI bus; LoRa CS/RST/IRQ/BUSY pins.
+4. Front button GPIOs and active level (a working config exists in the prototype's source).
+5. ~~PSRAM~~ → almost certainly none.
+6. ~~Integrity of the flash backup~~ → verified (§5).
 
 ## 4. Proposed read-only identification plan
 
@@ -151,9 +178,10 @@ With a multimeter in continuity mode, trace each front button pad and each of th
 
 Probe 1 is low risk. Probe 2 drives outputs and is only allowed once the pins are mapped.
 
-## 5. Backup discrepancy (blocking)
+## 5. Backups
 
-On 2026-10-24 this Mac does **not** have `~/esp32-dev/` (neither the `.venv` nor `backups/jsconf-original.bin`). Spotlight finds no file named `jsconf-original.bin`. Either the backup lives on another machine/path or it was lost. Until a verified backup exists on this machine, flashing stays blocked regardless of other progress.
+- Current chip state: `~/esp32-dev/backups/badge-2026-10-24-mictlan_card.bin`, SHA-256 `45049573431b3fe60fbaf99386102c5db54e421343d39fdc486b286fa0748e73`. Read twice (hashes match), `verify-flash` passed.
+- Stock JSConf Meshtastic image (SHA-256 `0640a9ca…`): kept by Hazel on another computer. Not on this Mac.
 
 ## 6. Change log
 - 2026-10-24 — Initial report from photos, GitHub/web search, passive USB enumeration.

@@ -1,6 +1,8 @@
 # Backup and Recovery
 
-Status: **No verified backup on this machine.** Flashing is blocked.
+Status: **Verified backup of the current chip state exists** (`~/esp32-dev/backups/badge-2026-10-24-mictlan_card.bin`, SHA-256 `45049573…8e73`, two reads matched, `verify-flash` passed 2026-10-24). The stock JSConf Meshtastic image (`0640a9ca…`) is on Hazel's other computer.
+
+Note for download mode on this Mac: hold **BOOT while plugging in USB**. Software auto-reset is unreliable here.
 
 ## Rules
 
@@ -55,7 +57,14 @@ Then parse the partition table (see `docs/hardware.md`, Step E) and record it be
 
 | Name | Type | SubType | Offset | Size | Flags |
 |---|---|---|---|---|---|
-| _to be filled after Step E_ | | | | | |
+| nvs | data | nvs | 0x9000 | 20K | |
+| otadata | data | ota | 0xe000 | 8K | |
+| app0 | app | ota_0 | 0x10000 | 3264K | |
+| app1 | app | ota_1 | 0x340000 | 3264K | |
+| spiffs | data | spiffs (LittleFS content) | 0x670000 | 1536K | |
+| coredump | data | coredump | 0x7f0000 | 64K | |
+
+Same table in the stock image and the current one. `otadata` selects `app0`; `app1` is erased. eFuses: Secure Boot off, flash encryption off, download mode enabled.
 
 ## 5. Recovery procedure
 
@@ -76,10 +85,10 @@ Why this is reliable: the ESP32-S3 ROM bootloader is in mask ROM and cannot be o
 
 ## 6. Pre-flash checklist (all required)
 
-- [ ] Backup read twice, hashes match, `verify-flash` passes
-- [ ] Offline second copy exists
-- [ ] Original partition table documented (§4)
-- [ ] eFuse summary captured (`python -m espefuse --port "$PORT" summary`, read-only) — confirm Secure Boot and flash encryption are **disabled**. If either is enabled, stop: restoring and custom flashing change completely.
+- [x] Backup read twice, hashes match, `verify-flash` passes
+- [x] Offline second copy exists (stock image on Hazel's other computer)
+- [x] Original partition table documented (§4)
+- [x] eFuse summary captured: Secure Boot and flash encryption **disabled**
 - [ ] New firmware partition table, flash mode/freq/size, and offsets written into `design.md`
 - [ ] Expected changes listed (which regions get overwritten)
 - [ ] Recovery procedure §5 rehearsed: at least steps 2–4 executed successfully
