@@ -17,7 +17,7 @@ SERVERLESS · GENAI · LATAM
 |---|---|---|
 | 1 | Animated digital business card | ✅ On hardware: typing intro, whoami, menu, card, GitHub, links + QR |
 | 2 | Mictlán.js frog auto-runner (`game.md`, `docs/game-design.md`) | ✅ Playable desktop simulator; badge port next |
-| 3 | Wi-Fi AI message (Strands Agents + Bedrock) | Spec outline |
+| 3 | El Guardián del Código: Strands Harness + Bedrock Nova on Lambda (`backend/`) | ✅ Built, tested, `cdk synth` clean; not deployed |
 
 ## Docs
 - Spec: [`requirements`](.kiro/specs/hazel-badge-os/requirements.md) · [`design`](.kiro/specs/hazel-badge-os/design.md) · [`tasks`](.kiro/specs/hazel-badge-os/tasks.md)

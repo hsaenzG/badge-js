@@ -58,4 +58,20 @@ Legend: 🔌 touches the device (read-only unless stated) and needs your go-ahea
 - [x] 5.2 Launch from the Phase 1 menu; `salir` returns to it
 - [ ] 5.3 Measure FPS on hardware; switch to dirty-region rendering if full-frame redraw is too slow
 - [ ] 5.4 ⚡ Flash with approval; play the full level on the badge
-## M6–M7. AWS backend (TS) and secure AI integration
+## M6. AWS backend: El Guardián on Strands Harness — built locally 2026-10-24
+- [x] 6.1 API contract v1 with strict Zod schemas (`backend/src/contract.ts`)
+- [x] 6.2 Guardián on `createHarness()`, locked down: no tools, no session, no memory, no skills/plugins, no caching; per-request agent (`backend/src/guardian.ts`)
+- [x] 6.3 AI challenges verified by running the snippet in a screened `node:vm` sandbox; bank fallback (`backend/src/snippet.ts`)
+- [x] 6.4 Answers held server-side in DynamoDB with TTL and try limit (`backend/src/store.ts`)
+- [x] 6.5 Handler: validation, 413/400/404, canned fallbacks, metadata-only JSON logs (`backend/src/handler.ts`)
+- [x] 6.6 Bundle with code splitting + guard against eager optional peers; bundle run locally end-to-end against a closed endpoint
+- [x] 6.7 CDK stack: REST API + per-badge key + usage plan, Lambda (Node 24 ARM, reserved 3), scoped Bedrock IAM, DynamoDB TTL, logs, error alarm, optional budget; `cdk synth --strict` clean with cdk-nag v3
+- [x] 6.8 28 backend tests (fake model): fallbacks, leak check, injection-proof prompts, dangerous code, try limits, logging
+- [ ] 6.9 ⚡☁ Deploy with approval (`aws login`, verify Nova inference profile, budget email)
+- [ ] 6.10 Smoke test against real Bedrock; tune prompts on real Nova output
+
+## M7. Badge online mode
+- [ ] 7.1 Wi-Fi + HTTPS client in Moddable with CA pinning; credentials + API key provisioned over serial into preferences
+- [ ] 7.2 Online Guardián lines in Mictlán.js (hint/cheer/final) with local fallback
+- [ ] 7.3 Online challenges via /v1/challenge + /v1/answer
+- [ ] 7.4 ⚡ Flash with approval

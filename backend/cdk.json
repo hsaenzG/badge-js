@@ -1,0 +1,6 @@
+{
+  "app": "npx tsx infra/app.ts",
+  "context": {
+    "modelId": "us.amazon.nova-lite-v1:0"
+  }
+}
