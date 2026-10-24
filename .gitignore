@@ -1,0 +1,37 @@
+# Firmware dumps and binaries: never commit
+*.bin
+*.elf
+*.map
+*.sha256
+backups/
+
+# ESP-IDF
+build/
+sdkconfig
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# Host builds
+sim/build/
+tests/build/
+cmake-build-*/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+secrets*
+nvs_*.csv
+
+# AWS CDK / Python
+cdk.out/
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+
+# OS / editor
+.DS_Store
+.vscode/
