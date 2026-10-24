@@ -140,7 +140,7 @@ function paintWhoamiStatic(revealed: number): void {
   if (revealed >= 2) poco.drawText(IDENTITY.role, F15, GRAY, MX, WHO_ROLE_Y);
   if (revealed >= 3) {
     poco.drawText(IDENTITY.tags, F15B, ACCENT, MX, WHO_TAGS_Y);
-    poco.drawText("SELECT ▸", F11, DIM, W - MX - poco.getTextWidth("SELECT ▸", F11), H - 16);
+    poco.drawText("SELECT →", F11, DIM, W - MX - poco.getTextWidth("SELECT →", F11), H - 16);
   }
   poco.end();
 }
@@ -153,14 +153,16 @@ function paintMenu(): void {
   for (let i = 0; i < MENU.length; i++) {
     const y = 28 + i * rowH;
     if (i === nav.menuIndex) {
-      poco.fillRectangle(ACCENT, MX - 4, y - 1, 180, rowH - 2);
-      poco.drawText(MENU_FOCUSED[i]!, F18, BLACK, MX, y);
+      // Focus = accent text + accent bar on black. Dark text on a bright fill
+      // is avoided: its anti-aliased edges hit the panel's bright low levels.
+      poco.fillRectangle(ACCENT, MX - 8, y + 3, 3, rowH - 8);
+      poco.drawText(MENU_FOCUSED[i]!, F18, ACCENT, MX, y);
     } else {
       poco.drawText(MENU_IDLE[i]!, F18, GRAY, MX, y);
     }
   }
-  poco.fillRectangle(DIM, 214, 30, 1, 88);
-  poco.drawText(MENU_HINT[nav.menuIndex]!, F15, WHITE, 228, 60);
+  poco.fillRectangle(DIM, 200, 30, 1, 88);
+  poco.drawText(MENU_HINT[nav.menuIndex]!, F13, WHITE, 214, 62);
   footer("▲▼ mover   SELECT abrir   BACK intro");
   poco.end();
 }
@@ -170,9 +172,9 @@ function paintCard(): void {
   clear();
   poco.drawText(CARD.name, F30B, WHITE, MX, 6);
   poco.drawText(CARD.role, F15B, ACCENT, MX, 46);
-  poco.drawText("▸ " + SPEC_LINE_1, F15, GRAY, MX, 74);
-  poco.drawText("▸ " + SPEC_LINE_2, F15, GRAY, MX, 96);
-  footer("BACK ◂ menú");
+  poco.drawText("> " + SPEC_LINE_1, F15, GRAY, MX, 74);
+  poco.drawText("> " + SPEC_LINE_2, F15, GRAY, MX, 96);
+  footer("BACK ← menú");
   poco.end();
 }
 
@@ -187,7 +189,7 @@ function paintGithubStatic(): void {
   poco.fillRectangle(DIM, MX, 32, W - 2 * MX, 1);
   poco.fillRectangle(DIM, MX, 86, W - 2 * MX, 1);
   poco.drawText(GITHUB.stack, F13, GRAY, MX, 96);
-  footer("BACK ◂ menú");
+  footer("BACK ← menú");
   poco.end();
 }
 
@@ -201,7 +203,7 @@ function paintLinks(): void {
     poco.drawText(focused ? LINK_FOCUSED[i]! : LINK_IDLE[i]!, F15, focused ? ACCENT : GRAY, MX, y);
     poco.drawText(LINKS[i]!.display, focused ? F15B : F15, focused ? WHITE : GRAY, 130, y);
   }
-  footer("▲▼ elegir   SELECT ▸ QR   BACK ◂ menú");
+  footer("▲▼ elegir   SELECT → QR   BACK ← menú");
   poco.end();
 }
 
@@ -226,7 +228,7 @@ function paintQr(): void {
   poco.drawText(link.display, F15B, WHITE, tx, 50);
   poco.drawText("escanéame", F13, GRAY, tx, 80);
   footer("");
-  poco.drawText("BACK ◂ links", F11, DIM, tx, H - 16);
+  poco.drawText("BACK ← links", F11, DIM, tx, H - 16);
   poco.end();
 }
 
@@ -235,7 +237,7 @@ function paintAbout(): void {
   clear();
   poco.drawText(ABOUT.title, F20B, ACCENT, MX, 10);
   for (let i = 0; i < ABOUT.lines.length; i++) poco.drawText(ABOUT.lines[i]!, F15, GRAY, MX, 46 + i * 24);
-  footer("SELECT ▸ panel test   BACK ◂ menú");
+  footer("SELECT → panel test   BACK ← menú");
   poco.end();
 }
 
@@ -259,7 +261,7 @@ function paintPanelTest(): void {
   poco.fillRectangle(poco.makeColor(255, 0, 0), 4, 96, cw - 2, 26);
   poco.fillRectangle(poco.makeColor(0, 255, 0), 4 + cw, 96, cw - 2, 26);
   poco.fillRectangle(poco.makeColor(0, 0, 255), 4 + 2 * cw, 96, cw - 2, 26);
-  poco.drawText("BACK ◂ about   (fondo = 0)", F11, DIM, MX, H - 16);
+  poco.drawText("BACK ← about   (fondo = 0)", F11, DIM, MX, H - 16);
   poco.end();
 }
 
