@@ -43,5 +43,19 @@ Legend: 🔌 touches the device (read-only unless stated) and needs your go-ahea
 - [ ] 3.5c Gray-ramp photo → decide on NV3007 gamma tweak (About → SELECT)
 - [ ] 3.6 Rehearse a full restore of a backup image (needs approval; overwrites Hazel Badge OS)
 
-## M4–M5. Mictlán.js game (`game.md`)
+## M4. Mictlán.js — desktop prototype (`game.md` Milestone 2) — done 2026-10-24
+- [x] 4.1 Game design doc (`docs/game-design.md`): auto-runner, 4 flowers, checkpoints, ofrenda, Guardián
+- [x] 4.2 Original pixel-art frog + calaverita, flor, Guardián, candle, heart (`src/core/game/sprites.ts`)
+- [x] 4.3 Offline question bank, 2 variants per concept; tests **execute every snippet in Node** to prove the answer
+- [x] 4.4 Deterministic 60 Hz game core (physics, collisions, hearts, checkpoints, pause, retry, victory, replay)
+- [x] 4.5 Shared renderer against a `Gfx` interface (`src/core/game/render.ts`)
+- [x] 4.6 Browser simulator at 428×142 ×3 with keyboard + panel-safe color toggle (`npm run sim`)
+- [x] 4.7 Tests: full bot playthrough (~2 min), determinism, checkpoints, every screen fits 428 px (69 tests)
+- [ ] 4.8 Playtest with Hazel; tune difficulty, timing, texts
+
+## M5. Mictlán.js on the badge (`game.md` Milestones 3–4)
+- [ ] 5.1 Poco `Gfx` adapter (palette with `PANEL_SAFE`, sprites as bitmaps, JetBrains Mono TTF)
+- [ ] 5.2 Launch from the Phase 1 menu; `salir` returns to it
+- [ ] 5.3 Measure FPS on hardware; switch to dirty-region rendering if full-frame redraw is too slow
+- [ ] 5.4 ⚡ Flash with approval; play the full level on the badge
 ## M6–M7. AWS backend (TS) and secure AI integration

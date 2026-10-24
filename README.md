@@ -16,7 +16,7 @@ SERVERLESS · GENAI · LATAM
 | Phase | What | State |
 |---|---|---|
 | 1 | Animated digital business card | ✅ On hardware: typing intro, whoami, menu, card, GitHub, links + QR |
-| 2 | Mictlán.js frog auto-runner (`game.md`) | Spec outline |
+| 2 | Mictlán.js frog auto-runner (`game.md`, `docs/game-design.md`) | ✅ Playable desktop simulator; badge port next |
 | 3 | Wi-Fi AI message (Strands Agents + Bedrock) | Spec outline |
 
 ## Docs
@@ -35,6 +35,15 @@ npm test                 # Vitest: typewriter, input FSM, navigation
 ```
 
 Flashing is a separate, explicitly approved step: see `docs/backup-and-recovery.md` §5b.
+
+### Mictlán.js simulator
+
+```sh
+npm run sim   # → http://127.0.0.1:4173/
+```
+
+↑/W jump · ↓/S crouch · Enter/Space SELECT · Esc/⌫ BACK. The checkbox previews the NV3007 panel-safe colors.
+Dev shortcuts: `?skip=challenge&flower=2`, `?skip=feedback`, `?skip=victory`, `?skip=retry`, `?skip=pause`.
 
 ## Safety
 This repo never stores flash dumps, credentials or device identifiers. Flashing only happens after the pre-flash checklist in `docs/backup-and-recovery.md` is complete and the owner approves the exact command.

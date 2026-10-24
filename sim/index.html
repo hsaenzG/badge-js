@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mictlán.js · simulador</title>
+    <style>
+      @font-face {
+        font-family: "JBM";
+        src: url("/assets/fonts/JetBrainsMonoNL-Regular.ttf");
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: "JBM";
+        src: url("/assets/fonts/JetBrainsMonoNL-Bold.ttf");
+        font-weight: 700;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0d0d0d;
+        color: #f2e8d5;
+        font-family: "JBM", ui-monospace, monospace;
+      }
+      .bezel {
+        padding: 18px;
+        border-radius: 18px;
+        background: #ff8c00;
+        box-shadow: 0 0 0 6px #f2e8d5;
+      }
+      canvas {
+        display: block;
+        width: calc(428px * 3);
+        height: calc(142px * 3);
+        image-rendering: pixelated;
+        background: #000;
+      }
+      .help {
+        margin-top: 18px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #9a9a9a;
+      }
+      kbd {
+        color: #f5e000;
+      }
+      label {
+        color: #f2e8d5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="bezel"><canvas id="screen" width="428" height="142" tabindex="0" aria-label="Pantalla del badge, 428 por 142 píxeles"></canvas></div>
+      <div class="help">
+        <kbd>↑</kbd>/<kbd>W</kbd> UP · saltar &nbsp; <kbd>↓</kbd>/<kbd>S</kbd> DOWN · agacharse &nbsp;
+        <kbd>Enter</kbd>/<kbd>Espacio</kbd> SELECT &nbsp; <kbd>Esc</kbd>/<kbd>⌫</kbd> BACK · pausa<br />
+        <label><input type="checkbox" id="panelSafe" /> colores seguros para el panel NV3007 (como se verá en el badge)</label><br />
+        <span id="status" role="status"></span>
+      </div>
+    </main>
+    <script type="module" src="/sim/dist/sim/main.js"></script>
+  </body>
+</html>

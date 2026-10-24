@@ -38,3 +38,4 @@ node_modules/
 
 # third-party sources fetched for tools (not redistributed)
 tools/vendor/
+sim/dist/

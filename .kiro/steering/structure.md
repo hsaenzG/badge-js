@@ -11,7 +11,8 @@ src/core/                     pure TypeScript logic: typewriter, navStack, input
 src/apps/                     Piu screens (TS): intro, menu, card, github, links, qr, about, mictlan
 src/platform/                 Moddable / ECMA-419 adapters: display, buttons, clock, net
 hosts/badge/                  Moddable manifest for this badge: verified pins, panel config, native driver if needed
-hosts/sim/                    mcsim manifest (keyboard → buttons, verified screen size)
+src/core/game/                Mictlán.js: game state machine, level, questions, sprites, palette, renderer (pure TS)
+sim/                          browser simulator (Canvas Gfx + keyboard, 428×142 ×3); `npm run sim`
 tests/                        Vitest tests for src/core
 assets/                       fonts (with license), sprites, source art
 backend/                      Phase 3: CDK app (TS) + Lambda (Node.js, Strands TS agent)
