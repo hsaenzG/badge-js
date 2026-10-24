@@ -22,6 +22,7 @@ import {
   Nav,
   SCR_ABOUT,
   SCR_CARD,
+  SCR_GAME,
   SCR_GITHUB,
   SCR_INTRO,
   SCR_LINKS,
@@ -31,11 +32,14 @@ import {
   SCR_WHOAMI,
 } from "core/nav";
 import { Buttons } from "platform/buttons";
+import { PocoGfx } from "platform/pocoGfx";
+import { Game, FPS } from "core/game/game";
+import { renderGame } from "core/game/render";
 
 // ---------------------------------------------------------------- setup
 
 declare const screen: any;
-const poco: any = new Poco(screen, { displayListLength: 4096 });
+const poco: any = new Poco(screen, { displayListLength: 16384 });
 const W: number = poco.width;
 const H: number = poco.height;
 
@@ -62,6 +66,7 @@ const F11 = face(REG, 11);
 const F13 = face(REG, 13);
 const F15 = face(REG, 15);
 const F18 = face(REG, 18);
+const F13B = face(BOLD, 13);
 const F15B = face(BOLD, 15);
 const F20B = face(BOLD, 20);
 const F30B = face(BOLD, 30);
@@ -78,6 +83,14 @@ const whoami = new Typewriter(WHOAMI_LINES);
 const ghTyping = new Typewriter(GITHUB.typing);
 const sample = newSample();
 
+// Mictlán.js: shared core + renderer, drawn through Poco
+const game = new Game();
+const gfx = new PocoGfx(poco, { s: F11, m: F13, l: F15, mb: F13B, lb: F20B });
+const GAME_STEP_MS = 1000 / FPS;
+let gameClock = 0;
+let fpsFrames = 0;
+let fpsSince = 0;
+
 let paintedVersion = -1;
 let qrBits: any = null;
 let qrForLink = -1;
@@ -85,7 +98,7 @@ let qrForLink = -1;
 // precomputed static strings (built once, reused every frame)
 const MENU_FOCUSED = MENU.map((m) => "> " + m.label);
 const MENU_IDLE = MENU.map((m) => "  " + m.label);
-const MENU_HINT: readonly string[] = ["quién soy", GITHUB.handle, "web · github · linkedin", ABOUT.title];
+const MENU_HINT: readonly string[] = ["quién soy", GITHUB.handle, "web · github · linkedin", "el juego", ABOUT.title];
 const LINK_FOCUSED = LINKS.map((l) => "> " + l.label);
 const LINK_IDLE = LINKS.map((l) => "  " + l.label);
 const SPEC_LINE_1 = CARD.specialties.slice(0, 2).join(" · ");
@@ -149,16 +162,16 @@ function paintMenu(): void {
   poco.begin();
   clear();
   poco.drawText(">_ menu", F13, ACCENT, MX, 6);
-  const rowH = 24;
+  const rowH = 19;
   for (let i = 0; i < MENU.length; i++) {
-    const y = 28 + i * rowH;
+    const y = 26 + i * rowH;
     if (i === nav.menuIndex) {
       // Focus = accent text + accent bar on black. Dark text on a bright fill
       // is avoided: its anti-aliased edges hit the panel's bright low levels.
       poco.fillRectangle(ACCENT, MX - 8, y + 3, 3, rowH - 8);
-      poco.drawText(MENU_FOCUSED[i]!, F18, ACCENT, MX, y);
+      poco.drawText(MENU_FOCUSED[i]!, F15B, ACCENT, MX, y);
     } else {
-      poco.drawText(MENU_IDLE[i]!, F18, GRAY, MX, y);
+      poco.drawText(MENU_IDLE[i]!, F15, GRAY, MX, y);
     }
   }
   poco.fillRectangle(DIM, 200, 30, 1, 88);
@@ -272,7 +285,21 @@ let lastAnimKey = -1; // avoids repainting a band when nothing visible changed
 function frame(): void {
   const now = Time.ticks;
 
+  if (nav.screen === SCR_GAME) {
+    gameFrame(now);
+    return;
+  }
   for (let e = input.next(); e >= 0; e = input.next()) nav.handle(eventButton(e), eventKind(e), now);
+  if (nav.screen === SCR_GAME) {
+    // just entered: start the game clock from now
+    game.reset();
+    gameClock = now;
+    fpsSince = now;
+    fpsFrames = 0;
+    paintedVersion = nav.version;
+    gameFrame(now);
+    return;
+  }
 
   const t = now - nav.enteredAt;
   const screenChanged = paintedVersion !== nav.version;
@@ -338,7 +365,33 @@ function frame(): void {
   if (screenChanged) paintedVersion = nav.version;
 }
 
-// buttons polled every 5 ms; UI frames at ~30 fps
+/** Fixed 60 Hz logic with catch-up, then one full redraw. */
+function gameFrame(now: number): void {
+  for (let e = input.next(); e >= 0; e = input.next()) game.input(eventButton(e), eventKind(e));
+  const held = buttons.read();
+  let steps = 0;
+  while (now - gameClock >= GAME_STEP_MS && steps < 4) {
+    game.tick(held);
+    gameClock += GAME_STEP_MS;
+    steps++;
+  }
+  if (now - gameClock > 100) gameClock = now; // fell far behind: drop time, don't spiral
+  if (game.consumeExit()) {
+    nav.exitGame(now);
+    return;
+  }
+  poco.begin();
+  renderGame(gfx, game);
+  poco.end();
+  fpsFrames++;
+  if (now - fpsSince >= 5000) {
+    trace(`mictlan: ${Math.round((fpsFrames * 1000) / (now - fpsSince))} fps\n`);
+    fpsFrames = 0;
+    fpsSince = now;
+  }
+}
+
+// buttons polled every 5 ms; frames as fast as 16 ms (the game needs it; card screens only repaint on change)
 Timer.repeat(() => input.update(buttons.read(), Time.ticks), 5);
-Timer.repeat(frame, 33);
+Timer.repeat(frame, 16);
 trace(`hazel-badge-os: ${W}x${H} ready\n`);

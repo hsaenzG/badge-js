@@ -5,6 +5,7 @@ import {
   Nav,
   SCR_ABOUT,
   SCR_CARD,
+  SCR_GAME,
   SCR_GITHUB,
   SCR_INTRO,
   SCR_LINKS,
@@ -50,10 +51,11 @@ describe("Nav", () => {
       nav.menuIndex = i;
       press(nav, BTN_SELECT);
       seen.push(nav.screen);
-      press(nav, BTN_BACK);
+      if (nav.screen === SCR_GAME) nav.exitGame(0);
+      else press(nav, BTN_BACK);
       expect(nav.screen).toBe(SCR_MENU);
     }
-    expect(seen).toEqual([SCR_CARD, SCR_GITHUB, SCR_LINKS, SCR_ABOUT]);
+    expect(seen).toEqual([SCR_CARD, SCR_GITHUB, SCR_LINKS, SCR_GAME, SCR_ABOUT]);
   });
 
   it("held SELECT/BACK never repeat the action", () => {
@@ -88,6 +90,20 @@ describe("Nav", () => {
     expect(nav.screen).toBe(SCR_PANEL_TEST);
     press(nav, BTN_BACK);
     expect(nav.screen).toBe(SCR_ABOUT);
+  });
+
+  it("the game screen ignores Nav buttons and leaves through exitGame", () => {
+    const nav = new Nav(LINKS.length);
+    nav.screen = SCR_MENU;
+    nav.menuIndex = MENU.findIndex((m) => m.screen === SCR_GAME);
+    press(nav, BTN_SELECT);
+    expect(nav.screen).toBe(SCR_GAME);
+    press(nav, BTN_BACK);
+    press(nav, BTN_SELECT);
+    expect(nav.screen).toBe(SCR_GAME);
+    nav.exitGame(5);
+    expect(nav.screen).toBe(SCR_MENU);
+    expect(MENU[nav.menuIndex]!.screen).toBe(SCR_GAME); // focus stays on the game entry
   });
 
   it("BACK on the menu replays the intro", () => {

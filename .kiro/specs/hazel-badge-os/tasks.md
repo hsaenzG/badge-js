@@ -54,8 +54,8 @@ Legend: 🔌 touches the device (read-only unless stated) and needs your go-ahea
 - [ ] 4.8 Playtest with Hazel; tune difficulty, timing, texts
 
 ## M5. Mictlán.js on the badge (`game.md` Milestones 3–4)
-- [ ] 5.1 Poco `Gfx` adapter (palette with `PANEL_SAFE`, sprites as bitmaps, JetBrains Mono TTF)
-- [ ] 5.2 Launch from the Phase 1 menu; `salir` returns to it
+- [x] 5.1 Poco `Gfx` adapter (palette with `PANEL_SAFE`, sprites as bitmaps, JetBrains Mono TTF)
+- [x] 5.2 Launch from the Phase 1 menu; `salir` returns to it
 - [ ] 5.3 Measure FPS on hardware; switch to dirty-region rendering if full-frame redraw is too slow
 - [ ] 5.4 ⚡ Flash with approval; play the full level on the badge
 ## M6–M7. AWS backend (TS) and secure AI integration

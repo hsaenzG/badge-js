@@ -167,11 +167,11 @@
 	"creation": {
 		"static": 0,
 		"chunk": {
-			"initial": 65536,
+			"initial": 131072,
 			"incremental": 0
 		},
 		"heap": {
-			"initial": 4096,
+			"initial": 8192,
 			"incremental": 0
 		},
 		"stack": 512

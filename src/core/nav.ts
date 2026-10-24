@@ -14,6 +14,8 @@ export const SCR_QR = 6;
 export const SCR_ABOUT = 7;
 /** Panel diagnostic (gray ramp). Reached from About with SELECT. */
 export const SCR_PANEL_TEST = 8;
+/** Mictlán.js. While here, the host routes buttons to the game, not to Nav. */
+export const SCR_GAME = 9;
 
 export interface MenuItem {
   readonly label: string;
@@ -24,6 +26,7 @@ export const MENU: readonly MenuItem[] = [
   { label: "tarjeta", screen: SCR_CARD },
   { label: "github", screen: SCR_GITHUB },
   { label: "links", screen: SCR_LINKS },
+  { label: "mictlán.js", screen: SCR_GAME },
   { label: "about", screen: SCR_ABOUT },
 ];
 
@@ -37,6 +40,11 @@ export class Nav {
   version = 0;
 
   constructor(private readonly linkCount: number) {}
+
+  /** Called when the game asks to quit: back to the menu. */
+  exitGame(now: number): void {
+    if (this.screen === SCR_GAME) this.go(SCR_MENU, now);
+  }
 
   /** Called when the intro typewriter finishes. */
   introDone(now: number): void {
@@ -78,6 +86,8 @@ export class Nav {
       case SCR_PANEL_TEST:
         if (!repeat && button === BTN_BACK) this.go(SCR_ABOUT, now);
         return;
+      case SCR_GAME:
+        return; // the game owns the buttons; it leaves through exitGame()
       default: // card, github, about
         if (!repeat && button === BTN_BACK) this.go(SCR_MENU, now);
         return;
