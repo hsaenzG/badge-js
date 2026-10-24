@@ -152,6 +152,8 @@ Still open: battery sense, slide-switch GPIO.
 
 Mitigation in v0.1.1: background drawn as pure `#000000`. A gray-ramp test screen (About → SELECT) shows levels 0, 2, 4 … 255 to map which levels are affected before any gamma change.
 
+Follow-up (photos `image/IMG_7777.jpg`–`IMG_7780.jpg`): black text on the yellow focus bar reads light gray. Same cause: anti-aliased dark edges land on the bright low levels. Rule for UI: **no dark text on bright fills**; pure black on pure white without AA (QR) is fine. `▸`/`◂` exist in JetBrains Mono but are the *small* triangles and look like a dot at 11 px; use `→`/`←`.
+
 v0.1.1 on glass (photos `image/IMG_7775.jpg`, `image/IMG_7776.jpg`): background reads black, white/gray/yellow text correct. Mitigation `VERIFIED`. Gray-ramp photo still pending, so the exact affected levels (and a possible gamma fix) remain open; until then avoid dark non-zero fills.
 
 Why the prototype failed: it used these correct pins with an **ST7789 init** on an **NV3007** panel.
