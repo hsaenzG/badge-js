@@ -136,7 +136,21 @@ Source: Hazel's earlier project `github.com/hsaenzG/mictlan-js`, branch `cursor/
 | LoRa SPI | SCK 37, MISO 36, MOSI 35, NSS 38 (separate bus from the LCD) | Stock boot log `SPI.begin(...)` | `VERIFIED` |
 | LoRa control | LLCC68 driver; IRQ 48, RST 47, BUSY 39 | Stock boot log `SX126xInterface(...)` | `VERIFIED` |
 
-Still open: X/Y offsets and color order (first color-fill test), battery sense, slide-switch GPIO.
+Still open: battery sense, slide-switch GPIO.
+
+### 2.7 First Hazel Badge OS boot on glass (2026-10-24, video `image/IMG_7774.MOV`)
+
+| Check | Result | Tag |
+|---|---|---|
+| Boot | Log: `hazel-badge-os: 428x142 ready` | `VERIFIED` |
+| Offsets (col 0 / row 14, MADCTL 0x60) | Full 428×142 area drawn, no garbage rows, nothing clipped | `VERIFIED` |
+| Color order | `#F5E000` shows yellow, white shows white → RGB order and byte order correct | `VERIFIED` |
+| Buttons | UP/DOWN/SELECT/BACK drive menu, links, QR, back navigation | `VERIFIED` |
+| Accents in JetBrains Mono TTF | `Sáenz`, `escanéame`, `menú` render | `VERIFIED` |
+| QR | LinkedIn QR renders with crisp black modules on white | `VERIFIED` |
+| **Near-black levels** | `#000000` (QR modules) is black, but `#0D0D0D` (background) shows as **light mint**; `#4A4A4A` shows dark gray. The lowest non-zero gray levels render bright | `VERIFIED` (visual). Root cause `HYPOTHESIS`: NV3007 2.79" gamma table (same one the stock firmware uses) |
+
+Mitigation in v0.1.1: background drawn as pure `#000000`. A gray-ramp test screen (About → SELECT) shows levels 0, 2, 4 … 255 to map which levels are affected before any gamma change.
 
 Why the prototype failed: it used these correct pins with an **ST7789 init** on an **NV3007** panel.
 

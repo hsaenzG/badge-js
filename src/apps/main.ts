@@ -26,6 +26,7 @@ import {
   SCR_INTRO,
   SCR_LINKS,
   SCR_MENU,
+  SCR_PANEL_TEST,
   SCR_QR,
   SCR_WHOAMI,
 } from "core/nav";
@@ -38,7 +39,10 @@ const poco: any = new Poco(screen, { displayListLength: 4096 });
 const W: number = poco.width;
 const H: number = poco.height;
 
-const BG = poco.makeColor(0x0d, 0x0d, 0x0d);
+// Design color is #0D0D0D, but this NV3007 panel renders the lowest non-zero
+// gray levels as bright mint (verified on hardware 2026-10-24, see docs/hardware.md).
+// Pure black is the closest visual match.
+const BG = poco.makeColor(0, 0, 0);
 const ACCENT = poco.makeColor(0xf5, 0xe0, 0x00);
 const WHITE = poco.makeColor(0xff, 0xff, 0xff);
 const GRAY = poco.makeColor(0x9a, 0x9a, 0x9a);
@@ -231,7 +235,31 @@ function paintAbout(): void {
   clear();
   poco.drawText(ABOUT.title, F20B, ACCENT, MX, 10);
   for (let i = 0; i < ABOUT.lines.length; i++) poco.drawText(ABOUT.lines[i]!, F15, GRAY, MX, 46 + i * 24);
-  footer("BACK ◂ menú");
+  footer("SELECT ▸ panel test   BACK ◂ menú");
+  poco.end();
+}
+
+/** Gray levels (8-bit) for the panel diagnostic, dense at the dark end. */
+const RAMP: readonly number[] = [0, 2, 4, 6, 8, 10, 13, 16, 20, 24, 32, 48, 64, 96, 128, 255];
+const RAMP_COLORS = RAMP.map((v) => poco.makeColor(v, v, v));
+const RAMP_LABELS = RAMP.map((v) => String(v));
+
+function paintPanelTest(): void {
+  poco.begin();
+  clear();
+  const n = RAMP.length;
+  const bw = Math.floor((W - 2 * 4) / n);
+  for (let i = 0; i < n; i++) {
+    const x = 4 + i * bw;
+    poco.fillRectangle(RAMP_COLORS[i]!, x, 4, bw - 2, 70);
+    poco.drawText(RAMP_LABELS[i]!, F11, ACCENT, x + 2, 78);
+  }
+  // pure primaries for color order / saturation
+  const cw = Math.floor((W - 8) / 3);
+  poco.fillRectangle(poco.makeColor(255, 0, 0), 4, 96, cw - 2, 26);
+  poco.fillRectangle(poco.makeColor(0, 255, 0), 4 + cw, 96, cw - 2, 26);
+  poco.fillRectangle(poco.makeColor(0, 0, 255), 4 + 2 * cw, 96, cw - 2, 26);
+  poco.drawText("BACK ◂ about   (fondo = 0)", F11, DIM, MX, H - 16);
   poco.end();
 }
 
@@ -300,6 +328,9 @@ function frame(): void {
       break;
     case SCR_ABOUT:
       if (screenChanged) paintAbout();
+      break;
+    case SCR_PANEL_TEST:
+      if (screenChanged) paintPanelTest();
       break;
   }
   if (screenChanged) paintedVersion = nav.version;

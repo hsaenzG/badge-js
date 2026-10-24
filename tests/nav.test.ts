@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { BTN_BACK, BTN_DOWN, BTN_SELECT, BTN_UP, EV_LONG, EV_PRESS, EV_REPEAT } from "../src/core/inputFsm";
-import { MENU, Nav, SCR_ABOUT, SCR_CARD, SCR_GITHUB, SCR_INTRO, SCR_LINKS, SCR_MENU, SCR_QR, SCR_WHOAMI } from "../src/core/nav";
+import {
+  MENU,
+  Nav,
+  SCR_ABOUT,
+  SCR_CARD,
+  SCR_GITHUB,
+  SCR_INTRO,
+  SCR_LINKS,
+  SCR_MENU,
+  SCR_PANEL_TEST,
+  SCR_QR,
+  SCR_WHOAMI,
+} from "../src/core/nav";
 import { LINKS } from "../src/core/content";
 
 const press = (nav: Nav, b: number, now = 0) => nav.handle(b, EV_PRESS, now);
@@ -65,6 +77,17 @@ describe("Nav", () => {
     expect(nav.screen).toBe(SCR_QR);
     press(nav, BTN_BACK);
     expect(nav.screen).toBe(SCR_LINKS);
+  });
+
+  it("About → SELECT opens the panel test, BACK returns to About", () => {
+    const nav = new Nav(LINKS.length);
+    nav.screen = SCR_ABOUT;
+    press(nav, BTN_SELECT);
+    expect(nav.screen).toBe(SCR_PANEL_TEST);
+    press(nav, BTN_UP);
+    expect(nav.screen).toBe(SCR_PANEL_TEST);
+    press(nav, BTN_BACK);
+    expect(nav.screen).toBe(SCR_ABOUT);
   });
 
   it("BACK on the menu replays the intro", () => {

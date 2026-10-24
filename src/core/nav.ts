@@ -12,6 +12,8 @@ export const SCR_GITHUB = 4;
 export const SCR_LINKS = 5;
 export const SCR_QR = 6;
 export const SCR_ABOUT = 7;
+/** Panel diagnostic (gray ramp). Reached from About with SELECT. */
+export const SCR_PANEL_TEST = 8;
 
 export interface MenuItem {
   readonly label: string;
@@ -67,6 +69,14 @@ export class Nav {
         return;
       case SCR_QR:
         if (!repeat && button === BTN_BACK) this.go(SCR_LINKS, now);
+        return;
+      case SCR_ABOUT:
+        if (repeat) return;
+        if (button === BTN_SELECT) this.go(SCR_PANEL_TEST, now);
+        else if (button === BTN_BACK) this.go(SCR_MENU, now);
+        return;
+      case SCR_PANEL_TEST:
+        if (!repeat && button === BTN_BACK) this.go(SCR_ABOUT, now);
         return;
       default: // card, github, about
         if (!repeat && button === BTN_BACK) this.go(SCR_MENU, now);
