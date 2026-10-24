@@ -19,7 +19,7 @@ Format: user story + acceptance criteria in EARS style (WHEN / IF / THE SYSTEM S
 
 ## R1. Board support and drivers
 
-1. THE system SHALL isolate all GPIO numbers, bus hosts, and panel parameters in one board-support component.
+1. THE system SHALL isolate all GPIO numbers, bus hosts, and panel parameters in one place: the badge host manifest (`hosts/badge/`).
 2. WHEN the board boots, THE system SHALL hold the LoRa module's CS inactive (if it shares a bus with the display) and keep the radio idle.
 3. THE display driver SHALL expose a hardware-independent interface (`width`, `height`, `flush(rect, pixels)`), so UI code never calls the panel directly.
 4. THE system SHALL control the backlight through the BSP once the backlight pin is verified.
@@ -60,15 +60,21 @@ Format: user story + acceptance criteria in EARS style (WHEN / IF / THE SYSTEM S
 18. THE focused item SHALL be visually distinct (accent color and/or inverse bar), never by color alone.
 
 ### Engineering constraints
-19. THE animation and render loops SHALL NOT allocate heap memory. All buffers are allocated once at init.
-20. Animation, navigation and text layout logic SHALL compile and pass unit tests on the host (macOS) without the badge.
+19. THE animation and render loops SHALL NOT create objects, arrays, or strings per frame. Everything they need is built at screen entry and reused.
+20. Animation, navigation and text layout logic SHALL be pure TypeScript and SHALL pass unit tests in Node (Vitest) without the badge.
 21. THE whole Phase 1 SHALL work with no network.
+
+### GitHub screen
+22. THE menu SHALL include a **GitHub** screen that recreates the hsaenzG profile README look offline: handle `@hsaenzG`, the typing lines, and the specialties row, in the same palette. Profile data is baked in at build time; nothing is fetched at runtime.
+
+### Language
+23. THE application code (screens, animation, navigation, input logic, game) SHALL be written in TypeScript and run on the badge's JavaScript engine. Native C is allowed only for drivers or timing-critical code that JS can't handle, and each such case SHALL be documented in `design.md`.
 
 **Phase 1 acceptance:** the badge boots into the intro, shows the card, and all four buttons behave as specified on real hardware.
 
-## R3. Phase 2 — Frog game
+## R3. Phase 2 — Mictlán.js
 
-> Open decision: `principal.md` describes **Frog Quest: Build Your Agent** (collect Model, Tools, Memory, Guardrails). `game.md` describes **Mictlán.js** (Día de Muertos auto-runner with four JS challenges). Requirements below cover the shared core; the theme is chosen before Phase 2 design.
+> Decided 2026-10-24: Phase 2 is **Mictlán.js** as described in `game.md` (Día de Muertos auto-runner, four cempasúchil flowers = Variables, Functions, Promises, Objects, each with a JS challenge; ofrenda finale). Detailed game requirements get their own section when Phase 2 starts.
 
 1. THE game SHALL launch from the main menu and SHALL be playable with only UP, DOWN, SELECT, BACK.
 2. Since there is no LEFT/RIGHT, THE game SHALL be an auto-runner: UP = jump, DOWN = crouch, SELECT = start/confirm, BACK = pause.
@@ -82,7 +88,7 @@ Format: user story + acceptance criteria in EARS style (WHEN / IF / THE SYSTEM S
 1. THE badge SHALL remain fully functional when the backend or Wi-Fi is unavailable, falling back to local messages.
 2. THE badge SHALL NOT contain AWS credentials.
 3. THE badge SHALL call the backend only over HTTPS with server certificate validation.
-4. THE backend SHALL use API Gateway → Lambda → Strands Agents → Amazon Bedrock, deployed with AWS CDK.
+4. THE backend SHALL use API Gateway → Lambda (Node.js, TypeScript) → Strands Agents TypeScript SDK → Amazon Bedrock, deployed with AWS CDK in TypeScript.
 5. THE backend SHALL enforce per-device authentication, request schema validation, throttling and a daily quota, a hard max output size, Lambda timeouts and reserved concurrency, and an AWS Budgets alarm.
 6. THE backend SHALL return compact JSON (target ≤ 512 bytes) that the firmware validates before rendering (length limits, allowed characters).
 7. THE backend SHALL NOT log secrets, device tokens, or personal data.

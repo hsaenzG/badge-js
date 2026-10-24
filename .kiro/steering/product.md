@@ -4,7 +4,9 @@ Custom firmware that turns Hazel Sáenz's JSConf México 2026 badge (Electronic 
 
 Phases, each must work on its own before the next starts:
 1. Animated digital business card (offline, terminal typing intro, menu, card, links, optional QR).
-2. Single-level frog auto-runner game (theme pending: "Frog Quest: Build Your Agent" vs "Mictlán.js").
+2. Mictlán.js: single-level Día de Muertos frog auto-runner with four JS challenges (full brief in `game.md`).
+
+Apps are written in JavaScript/TypeScript wherever the hardware allows. It's a JSConf badge.
 3. Optional Wi-Fi AI message via API Gateway → Lambda → Strands Agents → Amazon Bedrock.
 
 Visual language: background `#0D0D0D`, accent `#F5E000`, white/gray text, JetBrains Mono-style monospace, hacker/terminal minimalism. Spanish content with accents must render correctly.

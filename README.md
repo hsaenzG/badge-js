@@ -1,6 +1,6 @@
 # Hazel Badge OS
 
-Custom firmware for the Electronic Cats **JSConf México 2026** badge (ESP32-S3-WROOM-1, 8 MB flash, bar-type color TFT, 4 front buttons, 915 MHz LoRa module).
+Apps written in **TypeScript**, running on the badge's JavaScript engine (Moddable SDK / XS). Custom firmware for the Electronic Cats **JSConf México 2026** badge (ESP32-S3-WROOM-1, 8 MB flash, bar-type color TFT, 4 front buttons, 915 MHz LoRa module).
 
 ```
 >_ whoami
@@ -16,7 +16,7 @@ SERVERLESS · GENAI · LATAM
 | Phase | What | State |
 |---|---|---|
 | 1 | Animated digital business card | Spec written, blocked on display/button verification |
-| 2 | Frog auto-runner game | Spec outline, theme pending |
+| 2 | Mictlán.js frog auto-runner (`game.md`) | Spec outline |
 | 3 | Wi-Fi AI message (Strands Agents + Bedrock) | Spec outline |
 
 ## Docs
