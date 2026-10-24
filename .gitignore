@@ -35,3 +35,6 @@ node_modules/
 # OS / editor
 .DS_Store
 .vscode/
+
+# third-party sources fetched for tools (not redistributed)
+tools/vendor/

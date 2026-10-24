@@ -83,13 +83,40 @@ Use this only if a future flash leaves the badge unusable. It needs your approva
 
 Why this is reliable: the ESP32-S3 ROM bootloader is in mask ROM and cannot be overwritten, so download mode via BOOT+RST is always available unless eFuses (Secure Boot / flash encryption) were burned. The step below checks that.
 
+## 5b. First Hazel Badge OS flash: what changes
+
+Build: `./scripts/build-badge.sh` (ESP-IDF v6.1, Moddable, target `esp32/jsconf_badge`). Artifacts in `build/bin/esp32/jsconf_badge/release/badge-js/`.
+
+| Region | Before | After |
+|---|---|---|
+| `0x0000`–`0x3770` | IDF 5.5.5 bootloader | IDF 6.1 bootloader (`bootloader.bin`, 14,192 B, DIO 80 MHz, header 4 MB) |
+| `0x8000`–`0x8C00` | Arduino 8 MB table (nvs, otadata, app0, app1, spiffs, coredump) | Moddable table: `nvs` 0x9000 24K, `phy_init` 0xF000 4K, `factory` 0x10000 4032K |
+| `0x10000`–`0xF4530` | `mictlan_card` + stock leftovers | Hazel Badge OS (`xs_esp32.bin`, 935,216 B) |
+| everything else | unchanged | unchanged (old `spiffs`/`coredump` data stays, now unreferenced) |
+
+Side effect: the new `nvs` range (0x9000–0xF000) overlaps the old `nvs` + old `otadata`. If NVS init sees foreign data, ESP-IDF may reformat that 24K range on first boot. It holds nothing Phase 1 needs, and the full backup covers it.
+
+Flash command (requires explicit approval, download mode via BOOT held while plugging in):
+
+```sh
+cd build/bin/esp32/jsconf_badge/release/badge-js
+~/esp32-dev/.venv/bin/python -m esptool --chip esp32s3 --port /dev/cu.usbmodem101 \
+  --before no-reset --after no-reset write-flash \
+  --flash-mode keep --flash-freq keep --flash-size keep \
+  0x0 bootloader.bin 0x8000 partition-table.bin 0x10000 xs_esp32.bin
+```
+
+Then press the physical **RST** button to boot (software reset lands in download mode on this Mac).
+
+Undo: §5 with `~/esp32-dev/backups/badge-2026-10-24-mictlan_card.bin` (current state) or the stock image from the other computer.
+
 ## 6. Pre-flash checklist (all required)
 
 - [x] Backup read twice, hashes match, `verify-flash` passes
 - [x] Offline second copy exists (stock image on Hazel's other computer)
 - [x] Original partition table documented (§4)
 - [x] eFuse summary captured: Secure Boot and flash encryption **disabled**
-- [ ] New firmware partition table, flash mode/freq/size, and offsets written into `design.md`
-- [ ] Expected changes listed (which regions get overwritten)
-- [ ] Recovery procedure §5 rehearsed: at least steps 2–4 executed successfully
+- [x] New firmware partition table, flash mode/freq/size, and offsets written down (§5b)
+- [x] Expected changes listed (§5b)
+- [x] Recovery procedure §5 rehearsed up to step 4: download mode via BOOT, chip answers, two full reads hash-match (2026-10-24)
 - [ ] Explicit written approval from Hazel for the exact command

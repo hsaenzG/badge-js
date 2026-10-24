@@ -1,0 +1,30 @@
+{
+	"include": [
+		"$(MODDABLE)/examples/manifest_base.json",
+		"$(MODDABLE)/examples/manifest_commodetto.json",
+		"$(MODDABLE)/examples/manifest_typings.json",
+		"$(COMMODETTO)/manifest_cfeft.json",
+		"$(MODULES)/data/qrcode/manifest.json",
+		"$(COMMODETTO)/qrcode/manifest.json",
+		"$(IO)/digital"
+	],
+	"typescript": {
+		"tsconfig": {
+			"compilerOptions": {
+				"strict": true,
+				"noUncheckedIndexedAccess": true
+			}
+		}
+	},
+	"modules": {
+		"*": "./src/apps/main",
+		"core/*": "./src/core/*",
+		"platform/*": "./src/platform/*"
+	},
+	"data": {
+		"*": [
+			"./assets/fonts/JetBrainsMonoNL-Regular",
+			"./assets/fonts/JetBrainsMonoNL-Bold"
+		]
+	}
+}

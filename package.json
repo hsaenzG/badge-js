@@ -1,0 +1,16 @@
+{
+  "name": "hazel-badge-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript apps for the Electronic Cats JSConf México 2026 badge (Moddable SDK / XS)",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.core.json --noEmit",
+    "build:badge": "./scripts/build-badge.sh"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
