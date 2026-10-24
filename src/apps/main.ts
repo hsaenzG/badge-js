@@ -376,6 +376,11 @@ function gameFrame(now: number): void {
     steps++;
   }
   if (now - gameClock > 100) gameClock = now; // fell far behind: drop time, don't spiral
+  // Sound hook: no buzzer on this board yet (docs/hardware.md). A piezo adapter
+  // would play SFX[id] from core/game/sound here via LEDC PWM.
+  while (game.nextSound() >= 0) {
+    /* discard */
+  }
   if (game.consumeExit()) {
     nav.exitGame(now);
     return;

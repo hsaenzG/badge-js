@@ -9,6 +9,20 @@ import { BTN_BACK, BTN_DOWN, BTN_SELECT, BTN_UP, EV_PRESS, EV_REPEAT } from "../
 import { GROUND_Y, OB_BANNER, OB_SKULL, buildLevel, type Level } from "./level";
 import { FLOWER_ORDER, questionFor, type Question } from "./questions";
 import { wrap } from "../text";
+import {
+  SND_CORRECT,
+  SND_FLOWER,
+  SND_GAMEOVER,
+  SND_HIT,
+  SND_JUMP,
+  SND_MOVE,
+  SND_PETAL,
+  SND_SELECT,
+  SND_VICTORY,
+  SND_WRONG,
+} from "./sound";
+
+const SOUND_RING = 16;
 
 export const ST_TITLE = 0;
 export const ST_INTRO = 1;
@@ -89,6 +103,11 @@ export class Game {
   pauseIndex = 0;
   private pausedFrom = ST_RUN;
 
+  // sound events (ring buffer, drop oldest). Hosts drain with nextSound().
+  private readonly sounds = new Uint8Array(SOUND_RING);
+  private sHead = 0;
+  private sTail = 0;
+
   /** Set when the player chose "salir"; the host returns to its menu. */
   exitRequested = false;
 
@@ -116,35 +135,52 @@ export class Game {
     switch (this.state) {
       case ST_TITLE:
         if (repeat) return;
-        if (button === BTN_SELECT) this.go(ST_INTRO);
-        else if (button === BTN_BACK) this.exitRequested = true;
+        if (button === BTN_SELECT) {
+          this.sfx(SND_SELECT);
+          this.go(ST_INTRO);
+        } else if (button === BTN_BACK) this.exitRequested = true;
         return;
       case ST_INTRO:
-        if (!repeat && (button === BTN_SELECT || button === BTN_BACK)) this.startRun();
+        if (!repeat && (button === BTN_SELECT || button === BTN_BACK)) {
+          this.sfx(SND_SELECT);
+          this.startRun();
+        }
         return;
       case ST_RUN:
         if (repeat) return;
         if (button === BTN_UP && this.onGround && !this.crouching) {
           this.vy = JUMP_VY;
           this.onGround = false;
+          this.sfx(SND_JUMP);
         } else if (button === BTN_BACK) this.pause();
         return;
       case ST_CHALLENGE:
-        if (button === BTN_UP) this.option = (this.option + 3) % 4;
-        else if (button === BTN_DOWN) this.option = (this.option + 1) % 4;
+        if (button === BTN_UP) {
+          this.option = (this.option + 3) % 4;
+          this.sfx(SND_MOVE);
+        } else if (button === BTN_DOWN) {
+          this.option = (this.option + 1) % 4;
+          this.sfx(SND_MOVE);
+        }
         else if (repeat) return;
         else if (button === BTN_SELECT) this.confirmOption();
         else if (button === BTN_BACK) this.pause();
         return;
       case ST_FEEDBACK:
         if (!repeat && button === BTN_SELECT) {
+          this.sfx(SND_SELECT);
           if (this.lastCorrect) this.resumeAfterFlower();
           else this.go(ST_CHALLENGE);
         }
         return;
       case ST_PAUSE:
-        if (button === BTN_UP) this.pauseIndex = (this.pauseIndex + PAUSE_ITEMS.length - 1) % PAUSE_ITEMS.length;
-        else if (button === BTN_DOWN) this.pauseIndex = (this.pauseIndex + 1) % PAUSE_ITEMS.length;
+        if (button === BTN_UP) {
+          this.pauseIndex = (this.pauseIndex + PAUSE_ITEMS.length - 1) % PAUSE_ITEMS.length;
+          this.sfx(SND_MOVE);
+        } else if (button === BTN_DOWN) {
+          this.pauseIndex = (this.pauseIndex + 1) % PAUSE_ITEMS.length;
+          this.sfx(SND_MOVE);
+        }
         else if (repeat) return;
         else if (button === BTN_BACK) this.go(this.pausedFrom);
         else if (button === BTN_SELECT) {
@@ -227,9 +263,11 @@ export class Game {
         this.hearts--;
         this.invuln = INVULN_FRAMES;
         if (this.hearts <= 0) {
+          this.sfx(SND_GAMEOVER);
           this.go(ST_RETRY);
           return;
         }
+        this.sfx(SND_HIT);
         break;
       }
     }
@@ -241,6 +279,7 @@ export class Game {
       if (p.x > hx1 || p.x + PETAL_BOX < hx0 || p.y > hy1 || p.y + PETAL_BOX < hy0) continue;
       this.petalTaken[i] = 1;
       this.petals++;
+      this.sfx(SND_PETAL);
     }
 
     // next magic flower
@@ -250,6 +289,7 @@ export class Game {
       const flx = lv.flowers[this.flowersLit]!;
       if (hx1 >= flx) this.openChallenge();
     } else if (fx + FROG_W >= lv.ofrendaX - 30) {
+      this.sfx(SND_VICTORY);
       this.go(ST_VICTORY);
     }
   }
@@ -266,6 +306,7 @@ export class Game {
   }
 
   private pause(): void {
+    this.sfx(SND_SELECT);
     this.pausedFrom = this.state;
     this.pauseIndex = 0;
     this.go(ST_PAUSE);
@@ -279,6 +320,7 @@ export class Game {
     this.questionLines = wrap(this.question.question, 34);
     this.hintLines = wrap(this.question.hint, 34);
     this.crouching = false;
+    this.sfx(SND_FLOWER);
     this.go(ST_CHALLENGE);
   }
 
@@ -287,10 +329,12 @@ export class Game {
     if (!q) return;
     if (this.option === OPTION_HINT) {
       this.showHint = !this.showHint;
+      this.sfx(SND_SELECT);
       return;
     }
     this.attempts++;
     this.lastCorrect = this.option === q.answer;
+    this.sfx(this.lastCorrect ? SND_CORRECT : SND_WRONG);
     const head = this.lastCorrect
       ? "¡Excelente! Has iluminado otra flor del camino."
       : "Casi. El Guardián te deja una pista:";
@@ -340,6 +384,21 @@ export class Game {
     this.runFrames = 0;
     this.question = null;
     this.go(ST_TITLE);
+  }
+
+  /** Next sound event id (see sound.ts), or -1 when none are pending. */
+  nextSound(): number {
+    if (this.sHead === this.sTail) return -1;
+    const id = this.sounds[this.sTail]!;
+    this.sTail = (this.sTail + 1) % SOUND_RING;
+    return id;
+  }
+
+  private sfx(id: number): void {
+    const n = (this.sHead + 1) % SOUND_RING;
+    if (n === this.sTail) this.sTail = (this.sTail + 1) % SOUND_RING;
+    this.sounds[this.sHead] = id;
+    this.sHead = n;
   }
 
   /** Clears the exit flag after the host handled it. */

@@ -7,7 +7,15 @@
     "noUncheckedIndexedAccess": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/core/**/*.ts", "tests/**/*.ts"]
+  "include": [
+    "src/core/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "tests/sim/**"
+  ]
 }

@@ -6,6 +6,8 @@ import { FONT_SIZE, type FontId, type Gfx } from "../src/core/gfx";
 import { BTN_BACK, BTN_DOWN, BTN_SELECT, BTN_UP, EV_PRESS, InputFsm, eventButton, eventKind } from "../src/core/inputFsm";
 import { FPS, Game, ST_CHALLENGE, ST_RETRY, ST_VICTORY } from "../src/core/game/game";
 import { autoplayUntil } from "../src/core/game/autoplay";
+import { ST_RUN } from "../src/core/game/game";
+import { ChipAudio } from "./audio";
 import { renderGame } from "../src/core/game/render";
 import { PALETTE, PANEL_SAFE } from "../src/core/game/palette";
 import { SCALE, SPRITE_DEFS, decodeSprite } from "../src/core/game/sprites";
@@ -90,7 +92,13 @@ const KEYS: Record<string, number> = {
   Backspace: BTN_BACK,
 };
 let raw = 0;
+const audio = new ChipAudio();
+const muteToggle = document.getElementById("mute") as HTMLInputElement;
+const musicToggle = document.getElementById("music") as HTMLInputElement;
+audio.setMuted(muteToggle.checked);
+muteToggle.addEventListener("change", () => audio.setMuted(muteToggle.checked));
 addEventListener("keydown", (e) => {
+  audio.unlock(); // browsers only start audio after a user gesture
   const b = KEYS[e.code];
   if (b === undefined) return;
   e.preventDefault();
@@ -140,6 +148,8 @@ function loop(now: number): void {
     game.tick(raw);
     acc -= STEP;
   }
+  for (let s = game.nextSound(); s >= 0; s = game.nextSound()) audio.play(s);
+  audio.music(game.state === ST_RUN && musicToggle.checked);
   if (game.consumeExit()) status.textContent = "salir → (en el badge vuelve al menú de Hazel Badge OS)";
   // debug snapshot readable from devtools/automation (shared DOM)
   if ((game.frame & 7) === 0)
@@ -151,6 +161,8 @@ function loop(now: number): void {
       hearts: game.hearts,
       flowers: game.flowersLit,
       x: game.frogWorldX(),
+      audio: audio.state,
+      notes: audio.notes,
     });
   ctx.textBaseline = "top";
   renderGame(gfx, game);

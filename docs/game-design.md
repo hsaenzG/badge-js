@@ -100,6 +100,21 @@ src/apps/ (badge)        Poco Gfx + buttons, launched from the Phase 1 menu
 - `render.ts` draws the current state through `Gfx` only, so the same file renders in the browser and on the badge.
 - Hardware adapters only translate: keyboard or buttons → input events, and `Gfx` calls → Canvas or Poco.
 
-## 9. Phase 3 hook (later)
+## 9. Sound
+
+All sound is original and lives as data in `src/core/game/sound.ts`: each effect is a list of `[Hz, ms]` steps, one channel, so a piezo can play it.
+
+| Event | When |
+|---|---|
+| `jump` · `petal` · `hit` | run actions |
+| `flower` · `correct` · `wrong` | challenge |
+| `gameover` · `victory` | end states |
+| `move` · `select` | menus, pause, options |
+
+- **Run music**: a looping A-minor pentatonic lead over a walking bass at 140 bpm. Two voices in the simulator; a piezo would play the lead only.
+- **Simulator**: WebAudio, square waves for effects and a triangle wave for the bass. The **silencio** and **música** checkboxes control it, and audio starts on the first key press (browser policy).
+- **Badge**: no buzzer or speaker found (photos and stock firmware, see `docs/hardware.md`). The game still emits the events, and `src/apps/main.ts` drains them at the spot where a piezo adapter (LEDC PWM on a verified free GPIO) would go.
+
+## 10. Phase 3 hook (later)
 
 When online, the Guardián's lines and extra challenges can come from the AWS backend (`game.md` §6). In that mode the server keeps the answer and the badge submits an option id. Offline is always the default.
