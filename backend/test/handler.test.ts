@@ -155,6 +155,13 @@ describe("POST /v1/challenge + /v1/answer", () => {
     }
   });
 
+  it("rejects AI challenges whose hint states the answer", async () => {
+    const { handler, logs } = setup({ challenge: () => ({ ...goodChallenge, hint: "El arreglo tiene 2 elementos." }) });
+    const c = body(await handler(ev("/v1/challenge", { concept: "objects" })));
+    expect(c.source).toBe("bank");
+    expect(logs[0]!.rejected).toEqual(["hint leaked the answer", "hint leaked the answer"]);
+  });
+
   it("rejects dangerous generated code before running it", async () => {
     const { handler, logs } = setup({
       challenge: () => ({ ...goodChallenge, code: ["console.log(process.env);"], options: ["1", "2", "3"] }),

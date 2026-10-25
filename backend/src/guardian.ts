@@ -123,9 +123,9 @@ export function messagePrompt(req: MessageRequest): string {
 }
 
 /** Never reveal the answer: reject any hint that contains the correct option's text. */
-export function leaksAnswer(text: string, q: Question | undefined): boolean {
+export function leaksAnswer(text: string, q: { readonly options: readonly string[]; readonly answer: number } | undefined): boolean {
   if (!q) return false;
-  const answer = q.options[q.answer].replace(/^"|"$/g, "").toLowerCase();
+  const answer = q.options[q.answer]!.replace(/^"|"$/g, "").toLowerCase();
   return answer.length > 0 && new RegExp(`(^|[^a-z0-9])${answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`).test(text.toLowerCase());
 }
 
@@ -165,7 +165,7 @@ Reglas:
 - Strings con comillas dobles. Las opciones escriben los strings entre comillas dobles, como "hola"; números y undefined sin comillas.
 - Tres opciones distintas de menos de 12 caracteres.
 - "answer" es el índice de lo que imprime PRIMERO el código.
-- La pista ayuda sin revelar la respuesta.`;
+- La pista ayuda sin revelar la respuesta: no escribe el resultado ni hace la cuenta por la jugadora.`;
 }
 
 export interface FullChallenge {
@@ -191,6 +191,10 @@ export async function generateChallenge(invoke: StructuredInvoke, req: Challenge
       const tooBig = fitsBadge(c);
       if (tooBig) {
         rejected.push(tooBig);
+        continue;
+      }
+      if (leaksAnswer(c.hint, c)) {
+        rejected.push("hint leaked the answer");
         continue;
       }
       const check = verifyAnswer(c.code, c.options, c.answer);

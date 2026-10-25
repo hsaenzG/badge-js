@@ -66,6 +66,9 @@ const introScript: TypeLine[] = INTRO_LINES.map((text) => ({ text, typeMs: 32, h
 const introTypers = introScript.map((l) => new Typewriter([l]));
 const introSample = newSample();
 
+/** The stats show first; the online farewell (if any) takes the box after 2.5 s. */
+const FINAL_AFTER_FRAMES = 150;
+
 let victoryCacheKey = -1;
 let victoryStats = "";
 
@@ -332,6 +335,13 @@ function feedback(g: Gfx, game: Game): void {
     g.text(lines[i]!, i === 0 ? "mb" : "s", c, 50, 18 + i * 18);
   }
   footer(g, game.lastCorrect ? "SELECT continuar el camino" : "SELECT intentar de nuevo");
+  if (game.guardianSource === "ai") onlineMark(g);
+}
+
+const ONLINE_MARK = "· Guardián en línea";
+/** Small right-aligned marker: this text came from the online Guardián. */
+function onlineMark(g: Gfx): void {
+  g.text(ONLINE_MARK, "s", C_GLOW, g.width - 12 - g.textWidth(ONLINE_MARK, "s"), g.height - 15);
 }
 
 function pause(g: Gfx, game: Game): void {
@@ -369,12 +379,20 @@ function victory(g: Gfx, game: Game): void {
     victoryStats = `pétalos ${game.petals} · tiempo ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
     victoryCacheKey = game.runFrames;
   }
-  // stats box to the right of the ofrenda, so the portal stays visible
+  // box to the right of the ofrenda, so the portal stays visible
   const bx = g.width - 196;
-  box(g, bx, 26, 188, 62);
-  g.text("El agente despierta.", "mb", C_MARIGOLD, bx + 8, 32);
-  g.text(victoryStats, "s", C_BONE, bx + 8, 52);
-  g.text("4/4 flores iluminadas", "s", C_GLOW, bx + 8, 68);
+  if (game.finalLines.length > 0 && game.stateFrames >= FINAL_AFTER_FRAMES) {
+    // the online Guardián's farewell replaces the stats after a moment
+    const lines = game.finalLines;
+    box(g, bx, 6, 188, 18 + lines.length * 14);
+    g.text("El Guardián dice:", "s", C_MARIGOLD, bx + 8, 10);
+    for (let i = 0; i < lines.length; i++) g.text(lines[i]!, "s", C_BONE, bx + 8, 26 + i * 14);
+  } else {
+    box(g, bx, 26, 188, 62);
+    g.text("El agente despierta.", "mb", C_MARIGOLD, bx + 8, 32);
+    g.text(victoryStats, "s", C_BONE, bx + 8, 52);
+    g.text("4/4 flores iluminadas", "s", C_GLOW, bx + 8, 68);
+  }
   if (game.stateFrames >= 60) sceneFooter(g, "SELECT jugar otra vez   BACK título", 16);
 }
 

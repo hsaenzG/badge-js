@@ -7,7 +7,7 @@
  */
 import { BTN_BACK, BTN_DOWN, BTN_SELECT, BTN_UP, EV_PRESS, EV_REPEAT } from "../inputFsm";
 import { GROUND_Y, OB_BANNER, OB_SKULL, buildLevel, type Level } from "./level";
-import { FLOWER_ORDER, questionFor, type Question } from "./questions";
+import { FLOWER_ORDER, questionFor, type Concept, type Question } from "./questions";
 import { wrap } from "../text";
 import {
   SND_CORRECT,
@@ -23,6 +23,27 @@ import {
 } from "./sound";
 
 const SOUND_RING = 16;
+
+/**
+ * Something the online Guardián could say. The host may send it to the backend and,
+ * if a reply arrives while the player is still on that screen, pass it back with
+ * guardianReply(token, text). Offline, requests are simply ignored.
+ */
+export interface GuardianRequest {
+  readonly token: number;
+  readonly kind: "hint" | "cheer" | "final";
+  readonly questionId?: string;
+  readonly concept?: Concept;
+  readonly attempt?: number;
+  readonly flowers?: number;
+  readonly petals?: number;
+  readonly seconds?: number;
+}
+
+/** Line width (chars) of the feedback screen and of the victory box. */
+export const FEEDBACK_COLS = 50;
+export const VICTORY_COLS = 26;
+export const VICTORY_MAX_LINES = 6;
 
 export const ST_TITLE = 0;
 export const ST_INTRO = 1;
@@ -107,6 +128,17 @@ export class Game {
   private readonly sounds = new Uint8Array(SOUND_RING);
   private sHead = 0;
   private sTail = 0;
+
+  // online Guardián: requests out, replies in (tokens tie a reply to the screen that asked)
+  /** Only the newest request matters: replies apply to the current screen only. */
+  private pendingGuardian: GuardianRequest | undefined;
+  private nextToken = 1;
+  /** Token of the feedback/victory screen being shown, or 0. */
+  private screenToken = 0;
+  /** Where the visible Guardián text came from. */
+  guardianSource: "local" | "ai" = "local";
+  /** Victory message from the online Guardián, wrapped for the victory box. Empty offline. */
+  finalLines: string[] = [];
 
   /** Set when the player chose "salir"; the host returns to its menu. */
   exitRequested = false;
@@ -291,6 +323,13 @@ export class Game {
     } else if (fx + FROG_W >= lv.ofrendaX - 30) {
       this.sfx(SND_VICTORY);
       this.go(ST_VICTORY);
+      this.finalLines = [];
+      this.askGuardian({
+        kind: "final",
+        flowers: this.flowersLit,
+        petals: Math.min(this.petals, 999),
+        seconds: Math.min(Math.floor(this.runFrames / FPS), 3600),
+      });
     }
   }
 
@@ -299,6 +338,8 @@ export class Game {
   private go(state: number): void {
     this.state = state;
     this.stateFrames = 0;
+    this.screenToken = 0; // any screen change makes pending Guardián replies stale
+    this.guardianSource = "local";
   }
 
   private startRun(): void {
@@ -339,8 +380,47 @@ export class Game {
       ? "¡Excelente! Has iluminado otra flor del camino."
       : "Casi. El Guardián te deja una pista:";
     const body = this.lastCorrect ? q.explain : q.hint;
-    this.feedbackLines = [...wrap(head, 50), ...wrap(body, 50)];
+    this.feedbackLines = [...wrap(head, FEEDBACK_COLS), ...wrap(body, FEEDBACK_COLS)];
     this.go(ST_FEEDBACK);
+    this.askGuardian(
+      this.lastCorrect
+        ? { kind: "cheer", concept: q.concept, flowers: this.flowersLit + 1 }
+        : { kind: "hint", questionId: q.id, concept: q.concept, attempt: Math.min(this.attempts, 9) },
+    );
+  }
+
+  private askGuardian(req: Omit<GuardianRequest, "token">): void {
+    const token = this.nextToken++;
+    this.screenToken = token;
+    this.pendingGuardian = { token, ...req }; // replaces any older, now-stale request
+  }
+
+  /** The latest request for the online Guardián (once), or undefined. Stale ones are never returned. */
+  nextGuardianRequest(): GuardianRequest | undefined {
+    const r = this.pendingGuardian;
+    this.pendingGuardian = undefined;
+    return r && r.token === this.screenToken ? r : undefined;
+  }
+
+  /**
+   * Show an online Guardián line if the player is still on the screen that asked.
+   * The host must validate `text` (badge characters, ≤140) before calling.
+   * Returns true when the text was applied.
+   */
+  guardianReply(token: number, text: string): boolean {
+    if (token === 0 || token !== this.screenToken) return false;
+    if (this.state === ST_FEEDBACK && this.question) {
+      const q = this.question;
+      this.feedbackLines = this.lastCorrect
+        ? [...wrap(text, FEEDBACK_COLS).slice(0, 3), ...wrap(q.explain, FEEDBACK_COLS).slice(0, 2)]
+        : ["Casi. El Guardián te deja una pista:", ...wrap(text, FEEDBACK_COLS).slice(0, 4)];
+    } else if (this.state === ST_VICTORY) {
+      this.finalLines = wrap(text, VICTORY_COLS).slice(0, VICTORY_MAX_LINES);
+    } else {
+      return false;
+    }
+    this.guardianSource = "ai";
+    return true;
   }
 
   private resumeAfterFlower(): void {
@@ -368,6 +448,8 @@ export class Game {
 
   /** Back to the title screen with a fresh run (keeps playIndex for variety). */
   reset(): void {
+    this.pendingGuardian = undefined;
+    this.finalLines = [];
     this.cameraX = 0;
     this.cpCameraX = 0;
     this.frogY = 0;

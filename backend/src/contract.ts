@@ -3,12 +3,12 @@
  * Limits match what the badge can show on its 428×142 screen (see src/core/game/render.ts).
  */
 import { z } from "zod";
+import { BADGE_TEXT } from "../../src/core/badgeText";
+
+export { BADGE_TEXT };
 
 export const CONCEPTS = ["variables", "functions", "promises", "objects"] as const;
 export const Concept = z.enum(CONCEPTS);
-
-/** Characters the badge font renders: printable ASCII, Spanish Latin-1, a few symbols. */
-export const BADGE_TEXT = /^[\x20-\x7E¡¿áéíóúÁÉÍÓÚñÑüÜ·→←▲▼]*$/;
 
 const text = (max: number) => z.string().min(1).max(max).regex(BADGE_TEXT, "unsupported characters");
 
