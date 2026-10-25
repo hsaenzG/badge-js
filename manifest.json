@@ -6,7 +6,13 @@
 		"$(COMMODETTO)/manifest_cfeft.json",
 		"$(MODULES)/data/qrcode/manifest.json",
 		"$(COMMODETTO)/qrcode/manifest.json",
-		"$(IO)/digital"
+		"$(IO)/digital",
+		"$(MODDABLE)/modules/io/wifi",
+		"$(MODDABLE)/modules/io/socket",
+		"$(MODDABLE)/modules/io/dns/resolver",
+		"$(MODDABLE)/modules/io/ntp/client",
+		"$(MODDABLE)/modules/web/fetch",
+		"$(MODULES)/files/preference"
 	],
 	"typescript": {
 		"tsconfig": {
@@ -25,7 +31,8 @@
 	"data": {
 		"*": [
 			"./assets/fonts/JetBrainsMonoNL-Regular",
-			"./assets/fonts/JetBrainsMonoNL-Bold"
+			"./assets/fonts/JetBrainsMonoNL-Bold",
+			"$(MODULES)/crypt/data/ca222"
 		]
 	}
 }
