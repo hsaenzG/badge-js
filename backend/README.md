@@ -27,6 +27,8 @@ Get the badge's API key value (never committed, never in the template):
 aws apigateway get-api-key --api-key <ApiKeyId-hazel output> --include-value --query value --output text
 ```
 
-Context options: `modelId` (default `us.amazon.nova-lite-v1:0`), `profileRegions`, `badges` (comma-separated, one key each), `budgetEmail`, `monthlyBudgetUsd` (default 5).
+Deployed: `https://rxds32bmjh.execute-api.us-east-2.amazonaws.com/prod/v1/` (API key id `1nzk2at3ob`).
+
+Context options: `reservedConcurrency` (omit on 10-limit accounts), `modelId` (default `us.amazon.nova-lite-v1:0`), `profileRegions`, `badges` (comma-separated, one key each), `budgetEmail`, `monthlyBudgetUsd` (default 5).
 
 Remove everything: `npx cdk destroy MictlanGuardian`.

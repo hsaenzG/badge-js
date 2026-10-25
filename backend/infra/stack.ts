@@ -30,6 +30,8 @@ export interface GuardianStackProps extends cdk.StackProps {
   monthlyBudgetUsd: number;
   /** Badge API keys to create (one per device). */
   badges: string[];
+  /** Reserved Lambda concurrency; leave undefined on accounts with a 10-execution limit. */
+  reservedConcurrency?: number;
 }
 
 export class GuardianStack extends cdk.Stack {
@@ -58,7 +60,10 @@ export class GuardianStack extends cdk.Stack {
       code: lambda.Code.fromAsset(join(import.meta.dirname, "..", "dist", "lambda")),
       memorySize: 512,
       timeout: cdk.Duration.seconds(28), // under API Gateway 29 s; each model call capped at 9 s, 2 challenge attempts max
-      reservedConcurrentExecutions: 3, // hard cap on parallel Bedrock calls
+      // No reserved concurrency: this free-tier account's total limit is 10, and Lambda requires
+      // 10 unreserved, so any reservation fails. Parallelism is bounded by the usage plan
+      // (1 rps/badge), the stage throttle (5 rps) and the account limit itself.
+      reservedConcurrentExecutions: props.reservedConcurrency,
       environment: {
         MODEL_ID: props.modelId,
         MAX_TOKENS: "300",
@@ -94,7 +99,7 @@ export class GuardianStack extends cdk.Stack {
       cloudWatchRole: true,
       cloudWatchRoleRemovalPolicy: cdk.RemovalPolicy.DESTROY,
       deployOptions: {
-        stageName: "v1",
+        stageName: "prod", // routes live under /v1/..., so the stage must not also be "v1"
         throttlingRateLimit: 5, // whole API
         throttlingBurstLimit: 10,
         loggingLevel: apigw.MethodLoggingLevel.ERROR,

@@ -1,5 +1,9 @@
 # Architecture
 
+**Deployed** 2026-10-25: stack `MictlanGuardian`, account profile `free-tier-Strands`, region **us-east-2**.
+Base URL `https://rxds32bmjh.execute-api.us-east-2.amazonaws.com/prod/v1/` (stage `prod`). The API key value is never stored in the repo:
+`aws apigateway get-api-key --region us-east-2 --api-key 1nzk2at3ob --include-value --query value --output text`
+
 ```
 ┌──────────────── badge (ESP32-S3, Moddable XS) ────────────────┐
 │ TypeScript apps: card · menu · Mictlán.js                      │
@@ -10,7 +14,7 @@
 API Gateway REST  ── usage plan 1 rps / burst 2 / 200 per day · stage throttle 5 rps
                 │   request validator · access logs (key id only, never values)
                 ▼
-Lambda (Node 24, ARM64, 512 MB, 25 s, reserved concurrency 3)
+Lambda (Node 24, ARM64, 512 MB, 28 s)
   backend/src/handler.ts ── Zod validation · routing · JSON logs (metadata only)
   backend/src/guardian.ts ─ Strands Harness agent, locked down (see below)
   backend/src/snippet.ts ── runs AI-written code to verify its answer
@@ -56,7 +60,8 @@ This is defence in depth, not a security boundary: the code comes from our own p
 
 - Per-badge API key with usage plan: 1 rps, burst 2, 200 requests per day.
 - Stage throttle: 5 rps, burst 10 for the whole API.
-- Lambda reserved concurrency 3 caps parallel Bedrock calls.
+- Account Lambda concurrency limit (10 on this free-tier account; reserved concurrency is optional via context `reservedConcurrency`, impossible at 10).
+- Each structured-output call: max 3 turns, 1500 output tokens, 9 s; challenges retry once, then the offline bank.
 - `maxTokens: 300` on every call, 10 s Bedrock timeout, 2 SDK attempts.
 - AWS Budgets alert at 80% and 100% of a monthly amount (context `budgetEmail`, `monthlyBudgetUsd`).
 - CloudWatch alarm on Lambda errors.

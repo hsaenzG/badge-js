@@ -16,6 +16,7 @@ new GuardianStack(app, "MictlanGuardian", {
   budgetEmail: ctx("budgetEmail"),
   monthlyBudgetUsd: Number(ctx("monthlyBudgetUsd") ?? 5),
   badges: (ctx("badges") ?? "hazel").split(","),
+  reservedConcurrency: ctx("reservedConcurrency") ? Number(ctx("reservedConcurrency")) : undefined,
   description: "Mictlán.js — El Guardián del Código (Phase 3, Hazel Badge OS)",
   tags: { project: "hazel-badge-os", phase: "3" },
 });

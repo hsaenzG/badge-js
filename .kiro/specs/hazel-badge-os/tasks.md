@@ -67,8 +67,9 @@ Legend: 🔌 touches the device (read-only unless stated) and needs your go-ahea
 - [x] 6.6 Bundle with code splitting + guard against eager optional peers; bundle run locally end-to-end against a closed endpoint
 - [x] 6.7 CDK stack: REST API + per-badge key + usage plan, Lambda (Node 24 ARM, reserved 3), scoped Bedrock IAM, DynamoDB TTL, logs, error alarm, optional budget; `cdk synth --strict` clean with cdk-nag v3
 - [x] 6.8 28 backend tests (fake model): fallbacks, leak check, injection-proof prompts, dangerous code, try limits, logging
-- [ ] 6.9 ⚡☁ Deploy with approval (`aws login`, verify Nova inference profile, budget email)
-- [ ] 6.10 Smoke test against real Bedrock; tune prompts on real Nova output
+- [x] 6.9 ⚡☁ Deployed with approval 2026-10-25: profile free-tier-Strands, us-east-2, budget USD 5 → hazel.saenz@gmail.com
+- [x] 6.10 Smoke test on the live API: 403 without key, AI lines 1–2.8 s, 400 on bad input, AI challenge without answer, server-side answer, close after solve, logs metadata-only (0 key matches)
+- [ ] 6.11 Tune: challenge hints from the model can come close to the answer (apply leak check to AI challenge hints); usage-plan burst throttling not observed in a 6-request burst (daily quota still bounds cost)
 
 ## M7. Badge online mode
 - [ ] 7.1 Wi-Fi + HTTPS client in Moddable with CA pinning; credentials + API key provisioned over serial into preferences
