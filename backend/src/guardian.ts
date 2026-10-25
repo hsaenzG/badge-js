@@ -13,7 +13,7 @@
 import { createHarness } from "@strands-agents/harness";
 import { BedrockModel } from "@strands-agents/sdk/models/bedrock";
 import type { z } from "zod";
-import { BADGE_TEXT, GeneratedChallenge, GuardianLine, type ChallengeRequest, type MessageRequest } from "./contract";
+import { BADGE_TEXT, GeneratedChallenge, GuardianLine, fitsBadge, type ChallengeRequest, type MessageRequest } from "./contract";
 import { verifyAnswer } from "./snippet";
 import { CONCEPT_LABEL, QUESTIONS, type Concept, type Question } from "../../src/core/game/questions";
 
@@ -31,8 +31,10 @@ export interface HarnessOptions {
   modelId: string;
   region: string;
   maxTokens?: number;
-  /** Per-call budget; the API Gateway limit is 29 s, Lambda's timeout is set below that. */
+  /** Per Bedrock request (stream inactivity). */
   timeoutMs?: number;
+  /** Whole structured-output call, all turns included. Two challenge attempts must fit in Lambda's 25 s. */
+  callBudgetMs?: number;
 }
 
 /** Real invoker: a fresh, locked-down harness agent per call. */
@@ -59,10 +61,21 @@ export function harnessInvoker(opts: HarnessOptions): StructuredInvoke {
       contextManager: false, // single short turn
       printer: false,
     });
-    const result = await agent.invoke(prompt, { structuredOutputSchema: schema });
+    // Strands re-asks the model when its structured output fails schema validation, with no
+    // limit of its own. A strict schema + a small model can loop forever (seen live with Nova
+    // Lite on challenges), so every call gets a turn cap, a token cap and a wall-clock cap.
+    const result = await agent.invoke(prompt, {
+      structuredOutputSchema: schema,
+      limits: CALL_LIMITS,
+      cancelSignal: AbortSignal.timeout(opts.callBudgetMs ?? 9_000),
+    });
+    if (result.structuredOutput === undefined) throw new Error(`no structured output (${result.stopReason})`);
     return result.structuredOutput as z.infer<typeof schema>;
   };
 }
+
+/** Per-call caps: 1 answer + up to 2 schema corrections; output tokens across all of them. */
+export const CALL_LIMITS = { turns: 3, outputTokens: 1500 } as const;
 
 // ------------------------------------------------------------------ messages
 
@@ -133,15 +146,26 @@ export async function writeLine(invoke: StructuredInvoke, req: MessageRequest, s
 
 const DIFFICULTY = ["", "muy fácil, para alguien que empieza", "fácil", "intermedio, con un pequeño truco"] as const;
 
+/** One worked example per concept: small models copy a shape far better than they follow rules. */
+const EXAMPLE: Readonly<Record<Concept, string>> = {
+  variables: `{"code":["let n = 2;","n = n * 3;","console.log(n);"],"question":"¿Qué se imprime?","options":["2","6","5"],"answer":1,"hint":"n cambia en la segunda línea.","explain":"n vale 2 y luego 2 * 3: imprime 6."}`,
+  functions: `{"code":["const add = (a, b) => a + b;","console.log(add(2, 3));"],"question":"¿Qué se imprime?","options":["23","5","undefined"],"answer":1,"hint":"La flecha devuelve a + b con números.","explain":"2 + 3 es 5."}`,
+  promises: `{"code":["Promise.resolve(4)","  .then(n => n + 1)","  .then(console.log);"],"question":"¿Qué se imprime?","options":["4","5","undefined"],"answer":1,"hint":"Cada then recibe lo que devolvió el anterior.","explain":"4 pasa a 5 y se imprime 5."}`,
+  objects: `{"code":["const r = { ojos: 2 };","r.ojos = r.ojos + 1;","console.log(r.ojos);"],"question":"¿Qué se imprime?","options":["2","3","undefined"],"answer":1,"hint":"La segunda línea cambia la propiedad.","explain":"ojos pasa de 2 a 3."}`,
+};
+
 export function challengePrompt(req: ChallengeRequest): string {
-  return `Crea un reto de JavaScript sobre ${CONCEPT_LABEL[req.concept as Concept]}, nivel ${DIFFICULTY[req.difficulty]}.
-Reglas estrictas:
-- 1 a 3 líneas, máximo 30 caracteres por línea, que impriman con console.log.
-- Solo sintaxis básica: let, const, funciones flecha, objetos, arreglos, Promise.resolve().then(...).
-- Sin bucles, sin clases, sin new, sin async/await, sin this, sin acceso con corchetes ni comillas invertidas.
-- Tres opciones distintas de máximo 12 caracteres. Los strings van entre comillas dobles, como "hola"; números y undefined sin comillas.
-- "answer" es el índice exacto de lo que imprime PRIMERO el código.
-- La pista no revela la respuesta.`;
+  const concept = req.concept as Concept;
+  return `Crea UN reto NUEVO de JavaScript solo sobre ${CONCEPT_LABEL[concept]}, nivel ${DIFFICULTY[req.difficulty]}.
+Ejemplo del formato exacto (no lo copies, inventa otro):
+${EXAMPLE[concept]}
+Reglas:
+- 1 a 3 líneas muy cortas, menos de 26 caracteres cada una. Usa nombres de una letra.
+- Solo un concepto. Sin bucles, clases, new, async/await, this, corchetes con texto ni comillas invertidas.
+- Strings con comillas dobles. Las opciones escriben los strings entre comillas dobles, como "hola"; números y undefined sin comillas.
+- Tres opciones distintas de menos de 12 caracteres.
+- "answer" es el índice de lo que imprime PRIMERO el código.
+- La pista ayuda sin revelar la respuesta.`;
 }
 
 export interface FullChallenge {
@@ -164,6 +188,11 @@ export async function generateChallenge(invoke: StructuredInvoke, req: Challenge
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const c = await invoke(challengePrompt(req), GeneratedChallenge);
+      const tooBig = fitsBadge(c);
+      if (tooBig) {
+        rejected.push(tooBig);
+        continue;
+      }
       const check = verifyAnswer(c.code, c.options, c.answer);
       if (!check.ok) {
         rejected.push(check.reason);

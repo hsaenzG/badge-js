@@ -135,6 +135,26 @@ describe("POST /v1/challenge + /v1/answer", () => {
     expect(logs[0]!.rejected).toEqual(["answer mismatch", "answer mismatch"]);
   });
 
+  it("rejects AI challenges that would not fit the badge screen", async () => {
+    const { handler, logs } = setup({
+      challenge: () => ({ ...goodChallenge, code: ["const somethingVeryLong = [1, 2, 3];", "console.log(somethingVeryLong.length);"] }),
+    });
+    const c = body(await handler(ev("/v1/challenge", { concept: "functions" })));
+    expect(c.source).toBe("bank");
+    expect(logs[0]!.rejected).toEqual(["code line too long", "code line too long"]);
+  });
+
+  it("every worked example in the prompt is itself a valid, verified challenge", async () => {
+    const { fitsBadge, GeneratedChallenge: Schema } = await import("../src/contract");
+    const { verifyAnswer } = await import("../src/snippet");
+    for (const concept of ["variables", "functions", "promises", "objects"] as const) {
+      const p = challengePrompt({ concept, difficulty: 1 });
+      const ex = Schema.parse(JSON.parse(p.split("\n").find((l) => l.startsWith("{"))!));
+      expect(fitsBadge(ex), concept).toBeNull();
+      expect(verifyAnswer(ex.code, ex.options, ex.answer).verified, concept).toBe(true);
+    }
+  });
+
   it("rejects dangerous generated code before running it", async () => {
     const { handler, logs } = setup({
       challenge: () => ({ ...goodChallenge, code: ["console.log(process.env);"], options: ["1", "2", "3"] }),
@@ -170,7 +190,7 @@ describe("prompts", () => {
   it("challenge prompts carry the screening rules the snippet runner enforces", () => {
     const p = challengePrompt({ concept: "functions", difficulty: 2 });
     expect(p).toContain("Functions");
-    expect(p).toMatch(/Sin bucles, sin clases, sin new/);
+    expect(p).toMatch(/Sin bucles, clases, new/);
   });
 
   it("leaksAnswer matches the answer as a whole word only", () => {

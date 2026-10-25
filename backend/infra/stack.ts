@@ -57,7 +57,7 @@ export class GuardianStack extends cdk.Stack {
       handler: "index.handler",
       code: lambda.Code.fromAsset(join(import.meta.dirname, "..", "dist", "lambda")),
       memorySize: 512,
-      timeout: cdk.Duration.seconds(25), // under API Gateway's 29 s; Bedrock call capped at 10 s
+      timeout: cdk.Duration.seconds(28), // under API Gateway 29 s; each model call capped at 9 s, 2 challenge attempts max
       reservedConcurrentExecutions: 3, // hard cap on parallel Bedrock calls
       environment: {
         MODEL_ID: props.modelId,
@@ -118,7 +118,7 @@ export class GuardianStack extends cdk.Stack {
       contentType: "application/json",
       schema: { type: apigw.JsonSchemaType.OBJECT, maxProperties: 8 },
     });
-    const integration = new apigw.LambdaIntegration(fn, { proxy: true, timeout: cdk.Duration.seconds(26) });
+    const integration = new apigw.LambdaIntegration(fn, { proxy: true, timeout: cdk.Duration.seconds(29) });
     const v1 = api.root.addResource("v1");
     for (const path of ["message", "challenge", "answer"]) {
       v1.addResource(path).addMethod("POST", integration, {

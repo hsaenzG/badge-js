@@ -53,25 +53,47 @@ export const GuardianLine = z
   })
   .describe("Lo que dice El Guardián del Código en la pantalla del badge");
 
-/** Structured output for /v1/challenge. The server verifies `answer` by running `code`. */
+/**
+ * Structured output for /v1/challenge, as the MODEL sees it: deliberately looser than the
+ * badge limits. A schema the model keeps failing makes Strands re-ask it turn after turn
+ * (seen live with Nova Lite and 30-char lines). The exact badge limits are enforced
+ * afterwards by `fitsBadge()`, which rejects with a clear reason instead of looping.
+ */
 export const GeneratedChallenge = z
   .object({
     code: z
-      .array(z.string().min(1).max(30).regex(BADGE_TEXT))
+      .array(z.string().min(1).max(60))
       .min(1)
-      .max(3)
-      .describe("1 a 3 líneas de JavaScript, máximo 30 caracteres cada una. Debe imprimir con console.log."),
-    question: text(34).describe("La pregunta, máximo 34 caracteres. Normalmente: ¿Qué se imprime?"),
+      .max(4)
+      .describe("1 a 3 líneas MUY cortas de JavaScript (ideal: menos de 26 caracteres cada una). Debe imprimir con console.log."),
+    question: z.string().min(1).max(60).describe("La pregunta, corta. Normalmente: ¿Qué se imprime?"),
     options: z
-      .array(z.string().min(1).max(12).regex(BADGE_TEXT))
+      .array(z.string().min(1).max(30))
       .length(3)
-      .describe('Tres opciones distintas, máximo 12 caracteres. Strings entre comillas dobles, como "hola".'),
+      .describe('Exactamente tres opciones distintas y cortas. Strings entre comillas dobles, como "hola".'),
     answer: z.number().int().min(0).max(2).describe("Índice de la opción correcta (0, 1 o 2)"),
-    hint: text(68).describe("Una pista que ayuda sin revelar la respuesta. Máximo 68 caracteres."),
-    explain: text(100).describe("Explicación breve de la respuesta correcta. Máximo 100 caracteres."),
+    hint: z.string().min(1).max(120).describe("Una pista breve que ayuda sin revelar la respuesta."),
+    explain: z.string().min(1).max(160).describe("Explicación breve de la respuesta correcta."),
   })
   .describe("Un reto corto de JavaScript para el juego Mictlán.js");
 export type GeneratedChallenge = z.infer<typeof GeneratedChallenge>;
+
+/** Exact limits of the badge challenge screen (see src/core/game/render.ts). */
+export const BADGE_LIMITS = { codeLines: 3, codeChars: 30, question: 34, option: 12, hint: 68, explain: 100 } as const;
+
+/** null when the challenge fits the badge, otherwise the first reason it does not. */
+export function fitsBadge(c: GeneratedChallenge): string | null {
+  const L = BADGE_LIMITS;
+  const len = (s: string) => Array.from(s).length;
+  if (c.code.length > L.codeLines) return "too many code lines";
+  for (const line of c.code) if (len(line) > L.codeChars) return "code line too long";
+  if (len(c.question) > L.question) return "question too long";
+  for (const o of c.options) if (len(o) > L.option) return "option too long";
+  if (len(c.hint) > L.hint) return "hint too long";
+  if (len(c.explain) > L.explain) return "explain too long";
+  for (const s of [...c.code, c.question, ...c.options, c.hint, c.explain]) if (!BADGE_TEXT.test(s)) return "unsupported characters";
+  return null;
+}
 
 // ---------------------------------------------------------------- responses
 

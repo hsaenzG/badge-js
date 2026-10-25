@@ -15,8 +15,8 @@ npm run synth     # bundle + cdk synth --strict with cdk-nag (no deploy)
 
 ```sh
 aws login                                    # or your usual credentials
-aws bedrock get-inference-profile --inference-profile-identifier us.amazon.nova-lite-v1:0 --region us-east-1
-npx cdk bootstrap aws://<account>/us-east-1  # once per account/region
+aws bedrock get-inference-profile --inference-profile-identifier us.amazon.nova-lite-v1:0 --region us-east-2 --profile free-tier-Strands
+export AWS_PROFILE=free-tier-Strands CDK_DEFAULT_REGION=us-east-2  # account already bootstrapped in us-east-2
 npm run diff -- -c budgetEmail=<you@example.com>
 npm run deploy -- -c budgetEmail=<you@example.com>
 ```
