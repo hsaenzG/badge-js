@@ -94,13 +94,7 @@ let gameClock = 0;
 // online Guardián (Phase 3): Wi-Fi only starts when the game opens; offline is the default
 const net = new Net();
 const guardian = new GuardianClient(net.transport, delay, () => Time.ticks, 8000);
-const NET_LABEL: Readonly<Record<string, string>> = {
-  unconfigured: "Guardián: sin credenciales (offline)",
-  off: "Guardián: se conecta al abrir el juego",
-  connecting: "Guardián: conectando...",
-  online: "Guardián: en línea",
-  failed: "Guardián: sin red (offline)",
-};
+
 let fpsFrames = 0;
 let fpsSince = 0;
 
@@ -263,7 +257,7 @@ function paintAbout(): void {
   clear();
   poco.drawText(ABOUT.title, F20B, ACCENT, MX, 10);
   for (let i = 0; i < ABOUT.lines.length; i++) poco.drawText(ABOUT.lines[i]!, F15, GRAY, MX, 42 + i * 22);
-  poco.drawText(NET_LABEL[net.state]!, F11, net.state === "online" ? ACCENT : GRAY, MX, 42 + ABOUT.lines.length * 22);
+  poco.drawText(net.label(), F11, net.online ? ACCENT : GRAY, MX, 42 + ABOUT.lines.length * 22);
   footer("SELECT → panel test   BACK ← menú");
   poco.end();
 }
@@ -307,7 +301,6 @@ function frame(): void {
   if (nav.screen === SCR_GAME) {
     // just entered: start the game clock from now
     game.reset();
-    net.start(); // lazy: the card never touches the radio
     gameClock = now;
     fpsSince = now;
     fpsFrames = 0;
@@ -396,8 +389,10 @@ function gameFrame(now: number): void {
   while (game.nextSound() >= 0) {
     /* discard */
   }
+  net.tick(now); // lazy: the radio only starts (and retries every 30 s) while the game is open
+  game.statusLine = net.label();
   const req = game.nextGuardianRequest();
-  if (req && net.state === "online") {
+  if (req && net.online) {
     const token = req.token;
     const t0 = Time.ticks;
     guardian

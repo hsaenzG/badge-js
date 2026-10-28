@@ -169,6 +169,7 @@ function loop(now: number): void {
     acc -= STEP;
   }
   for (let s = game.nextSound(); s >= 0; s = game.nextSound()) audio.play(s);
+  game.statusLine = onlineToggle.checked ? "Guardián: en línea" : "Guardián: no veo la red (¿hotspot visible y en 2.4 GHz?)";
   for (let r = game.nextGuardianRequest(); r; r = game.nextGuardianRequest()) {
     if (!onlineToggle.checked) continue; // offline: keep the local text
     const token = r.token;

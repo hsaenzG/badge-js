@@ -265,6 +265,7 @@ function title(g: Gfx, game: Game): void {
   g.text(tag2, "s", C_BONE, (g.width - g.textWidth(tag2, "s")) >> 1, 80);
   g.sprite((game.frame >> 4) & 1 ? SPR_FROG_RUN : SPR_FROG_IDLE, FROG_SCREEN_X, GROUND_Y - FROG_H);
   g.sprite(SPR_GUARDIAN, g.width - 60, GROUND_Y - 24);
+  statusLine(g, game);
   const hint = "SELECT jugar   BACK salir";
   sceneFooter(g, hint, (g.width - g.textWidth(hint, "s")) >> 1);
 }
@@ -338,6 +339,13 @@ function feedback(g: Gfx, game: Game): void {
   if (game.guardianSource === "ai") onlineMark(g);
 }
 
+/** Network status from the host, in the strip above the papel picado (y 2–15). */
+function statusLine(g: Gfx, game: Game): void {
+  if (!game.statusLine) return;
+  g.fill(C_NIGHT, 0, 0, g.width, 16);
+  g.text(game.statusLine, "s", game.statusLine.endsWith("en línea") ? C_MARIGOLD : C_GRAY, 12, 2);
+}
+
 const ONLINE_MARK = "· Guardián en línea";
 /** Small right-aligned marker: this text came from the online Guardián. */
 function onlineMark(g: Gfx): void {
@@ -346,6 +354,7 @@ function onlineMark(g: Gfx): void {
 
 function pause(g: Gfx, game: Game): void {
   run(g, game);
+  statusLine(g, game);
   box(g, 134, 28, 160, 80);
   g.text("pausa", "mb", C_MARIGOLD, 148, 34);
   for (let i = 0; i < PAUSE_ITEMS.length; i++) {

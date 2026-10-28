@@ -5,9 +5,12 @@
  * domain "guardian": ssid, password, apikey, url. They get there through a separate
  * NVS image built by scripts/provision-badge.py (kept outside the repo).
  *
- * Wi-Fi starts only when Mictlán.js opens (Phase 1 boots with no network), and any
- * failure leaves the badge offline: the game always has local text.
- * Logs never include the SSID, password, API key, or Guardián text.
+ * Flow: scan → (our network seen?) → connect → IP → NTP → online. Each step reports a
+ * specific failure (src/core/netStatus.ts) so the screen can say what went wrong, and
+ * the game retries every 30 s while it is open. Phase 1 boots with the radio off.
+ *
+ * Logs never include the SSID, password, other networks' names, the API key, or
+ * Guardián text: only counts, RSSI, channel, security type and connection codes.
  */
 import WiFi from "embedded:network/interface/wifi";
 import Preference from "preference";
@@ -15,13 +18,12 @@ import Time from "time";
 import Timer from "timer";
 import { fetch, Headers } from "fetch";
 import type { Transport } from "core/guardianClient";
+import { RETRY_MS, judgeScan, netLabel, type NetFailure, type NetPhase } from "core/netStatus";
 
 declare const device: any;
 
 const DOMAIN = "guardian";
 const CONNECT_TIMEOUT_MS = 20_000;
-
-export type NetState = "unconfigured" | "off" | "connecting" | "online" | "failed";
 
 interface NetConfig {
   ssid: string;
@@ -45,66 +47,135 @@ function readConfig(): NetConfig | null {
 }
 
 export class Net {
-  state: NetState;
+  phase: NetPhase;
+  failure: NetFailure | undefined;
+  /** Bumped on every phase change, so screens can repaint. */
+  version = 0;
   private readonly cfg: NetConfig | null;
   private wifi: WiFi | undefined;
   private timer: unknown;
-  private wasConnecting = false;
+  private failedAt = 0;
+  private sawConnected = false;
+  private lastConn = 0;
 
   constructor() {
     this.cfg = readConfig();
-    this.state = this.cfg ? "off" : "unconfigured";
+    this.phase = this.cfg ? "idle" : "unconfigured";
   }
 
-  /** Connect once; later calls are no-ops unless the last attempt failed. */
-  start(): void {
-    if (!this.cfg || this.state === "connecting" || this.state === "online") return;
-    this.state = "connecting";
-    this.wasConnecting = false;
-    trace("guardian: wifi connecting\n");
+  get online(): boolean {
+    return this.phase === "online";
+  }
+
+  label(): string {
+    return netLabel(this.phase, this.failure);
+  }
+
+  /** Call every frame while the game is open: starts once, retries after failures. */
+  tick(now: number): void {
+    if (!this.cfg) return;
+    if (this.phase === "idle" || (this.phase === "failed" && now - this.failedAt >= RETRY_MS)) this.start();
+  }
+
+  private set(phase: NetPhase, failure?: NetFailure): void {
+    this.phase = phase;
+    this.failure = failure;
+    this.version++;
+  }
+
+  private start(): void {
+    const cfg = this.cfg!;
+    this.set("scanning");
+    this.sawConnected = false;
+    this.lastConn = 0;
     try {
-      const cfg = this.cfg;
       const self = this;
       this.wifi = new WiFi({
         onChanged() {
           const c = this.connection;
-          if (c >= 300) self.wasConnecting = true;
-          if (c >= 500 && self.state === "connecting") self.onAddress(this.address);
-          else if (c <= 200 && self.wasConnecting) self.fail(self.state === "online" ? "disconnected" : "rejected");
+          if (c !== self.lastConn) trace(`guardian: wifi ${c}\n`); // 200 idle · 300 connecting · 400 associated · 500 IP
+          self.lastConn = c;
+          if (self.phase !== "connecting") return;
+          if (c >= 400) self.sawConnected = true;
+          if (c >= 500) self.onAddress();
+          else if (c <= 200) self.fail(self.sawConnected ? "no_ip" : "rejected");
         },
       });
-      this.wifi.connect(cfg.password ? { SSID: cfg.ssid, password: cfg.password } : { SSID: cfg.ssid });
-      this.timer = Timer.set(() => {
-        this.timer = undefined;
-        if (this.state === "connecting") this.fail("timeout");
-      }, CONNECT_TIMEOUT_MS);
+      const seen: Array<{ SSID: string; RSSI: number; channel: number; security: string }> = [];
+      trace("guardian: wifi scanning\n");
+      this.wifi.scan({
+        onFound(ap: { SSID: string; RSSI: number; channel: number; security: string }) {
+          if (seen.length < 40) seen.push(ap);
+        },
+        onComplete() {
+          const v = judgeScan(cfg.ssid, seen);
+          if (!v.found) {
+            trace(`guardian: scan ${seen.length} networks, ours: ${v.failure}\n`);
+            return self.fail(v.failure);
+          }
+          trace(`guardian: scan ${seen.length} networks, ours: rssi ${v.rssi} ch ${v.channel} ${v.security}\n`);
+          self.connect(cfg);
+        },
+      });
+      this.armTimeout();
     } catch (e) {
-      this.fail(e instanceof Error ? e.message : "wifi error");
+      this.fail("error", e instanceof Error ? e.message : "wifi error");
     }
   }
 
-  private onAddress(address: string | undefined): void {
-    trace(`guardian: wifi ip ${address ?? "?"}\n`);
+  private connect(cfg: NetConfig): void {
+    this.set("connecting");
+    try {
+      this.wifi!.connect(cfg.password ? { SSID: cfg.ssid, password: cfg.password } : { SSID: cfg.ssid });
+      this.armTimeout();
+    } catch (e) {
+      this.fail("error", e instanceof Error ? e.message : "connect error");
+    }
+  }
+
+  private armTimeout(): void {
+    this.clearTimer();
+    this.timer = Timer.set(() => {
+      this.timer = undefined;
+      if (this.phase === "scanning") this.fail("error", "scan timeout");
+      else if (this.phase === "connecting") this.fail(this.sawConnected ? "no_ip" : "rejected", "timeout");
+    }, CONNECT_TIMEOUT_MS);
+  }
+
+  private onAddress(): void {
+    trace("guardian: wifi got ip\n");
+    this.clearTimer();
     // TLS checks certificate dates, so get the time before going online
     try {
       const ntp = new device.network.ntp.client.io({ ...device.network.ntp.client, servers: ["pool.ntp.org", "time.google.com"] });
-      ntp.getTime((error: unknown, value: number) => {
-        ntp.close();
-        if (error) {
-          trace("guardian: ntp failed\n");
-          return this.fail("ntp");
+      this.timer = Timer.set(() => {
+        this.timer = undefined;
+        try {
+          ntp.close();
+        } catch {
+          /* ignore */
         }
+        if (this.phase === "connecting") this.fail("no_internet", "ntp timeout");
+      }, 10_000);
+      ntp.getTime((error: unknown, value: number) => {
+        try {
+          ntp.close();
+        } catch {
+          /* ignore */
+        }
+        if (this.phase !== "connecting") return;
+        if (error) return this.fail("no_internet", "ntp");
         Time.set(value / 1000);
         this.clearTimer();
-        this.state = "online";
+        this.set("online");
         trace("guardian: online\n");
       });
     } catch {
-      this.fail("ntp");
+      this.fail("no_internet", "ntp");
     }
   }
 
-  private fail(reason: string): void {
+  private fail(failure: NetFailure, detail?: string): void {
     this.clearTimer();
     try {
       this.wifi?.close();
@@ -112,8 +183,9 @@ export class Net {
       /* ignore */
     }
     this.wifi = undefined;
-    this.state = "failed";
-    trace(`guardian: offline (${reason})\n`);
+    this.failedAt = Time.ticks;
+    this.set("failed", failure);
+    trace(`guardian: offline (${failure}${detail ? ": " + detail.slice(0, 40) : ""}), retry in ${RETRY_MS / 1000} s\n`);
   }
 
   private clearTimer(): void {
@@ -124,7 +196,7 @@ export class Net {
   /** HTTPS POST to the Guardián API. Only usable while online. */
   readonly transport: Transport = async (path, body) => {
     const cfg = this.cfg;
-    if (!cfg || this.state !== "online") throw new Error("offline");
+    if (!cfg || this.phase !== "online") throw new Error("offline");
     const res = await fetch(cfg.url + path, {
       method: "POST",
       headers: new Headers([

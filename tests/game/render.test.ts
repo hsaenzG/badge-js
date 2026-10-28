@@ -69,6 +69,7 @@ describe("render", () => {
       expectTextFits(gfx);
       seen.add(game.state);
     };
+    game.statusLine = "Guardián: nombre de red distinto (revisa el apóstrofo)"; // longest label
     check(); // title
     press(game, BTN_SELECT);
     for (let i = 0; i < 400; i++) {

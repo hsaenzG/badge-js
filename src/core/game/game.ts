@@ -137,6 +137,8 @@ export class Game {
   private screenToken = 0;
   /** Where the visible Guardián text came from. */
   guardianSource: "local" | "ai" = "local";
+  /** One-line network status set by the host (e.g. "Guardián: en línea"); shown on title and pause. */
+  statusLine = "";
   /** Victory message from the online Guardián, wrapped for the victory box. Empty offline. */
   finalLines: string[] = [];
 
