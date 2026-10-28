@@ -1,34 +1,36 @@
-# El Guardián del Código — backend (Phase 3)
+# El Guardián del Código: backend (Fase 3)
 
-Strands Harness agent on AWS Lambda behind API Gateway, with Amazon Bedrock (Amazon Nova) and AWS CDK. Design: [`../docs/architecture.md`](../docs/architecture.md).
+**Español** · [English](README.en.md)
+
+Agente de Strands Harness en AWS Lambda detrás de API Gateway, con Amazon Bedrock (Amazon Nova) y AWS CDK. Diseño: [`../docs/architecture.md`](../docs/architecture.md).
 
 ## Local
 
 ```sh
 npm install
-npm test          # 28 tests, fake model (no AWS needed)
+npm test          # 28 pruebas con un modelo falso (no necesita AWS)
 npm run typecheck
-npm run synth     # bundle + cdk synth --strict with cdk-nag (no deploy)
+npm run synth     # bundle + cdk synth --strict con cdk-nag (no despliega)
 ```
 
-## Deploy (needs approval: creates billable AWS resources)
+## Desplegar (requiere aprobación: crea recursos de AWS que cuestan)
 
 ```sh
-aws login                                    # or your usual credentials
+aws login                                    # o tus credenciales de siempre
 aws bedrock get-inference-profile --inference-profile-identifier us.amazon.nova-lite-v1:0 --region us-east-2 --profile free-tier-Strands
-export AWS_PROFILE=free-tier-Strands CDK_DEFAULT_REGION=us-east-2  # account already bootstrapped in us-east-2
-npm run diff -- -c budgetEmail=<you@example.com>
-npm run deploy -- -c budgetEmail=<you@example.com>
+export AWS_PROFILE=free-tier-Strands CDK_DEFAULT_REGION=us-east-2  # la cuenta ya tiene bootstrap en us-east-2
+npm run diff -- -c budgetEmail=<tu@email.com>
+npm run deploy -- -c budgetEmail=<tu@email.com>
 ```
 
-Get the badge's API key value (never committed, never in the template):
+Para obtener el valor de la API key del badge (nunca va en un commit ni en la plantilla):
 
 ```sh
-aws apigateway get-api-key --api-key <ApiKeyId-hazel output> --include-value --query value --output text
+aws apigateway get-api-key --api-key <salida ApiKeyId-hazel> --include-value --query value --output text
 ```
 
-Deployed: `https://rxds32bmjh.execute-api.us-east-2.amazonaws.com/prod/v1/` (API key id `1nzk2at3ob`).
+Desplegado: `https://rxds32bmjh.execute-api.us-east-2.amazonaws.com/prod/v1/` (id de la API key `1nzk2at3ob`).
 
-Context options: `reservedConcurrency` (omit on 10-limit accounts), `modelId` (default `us.amazon.nova-lite-v1:0`), `profileRegions`, `badges` (comma-separated, one key each), `budgetEmail`, `monthlyBudgetUsd` (default 5).
+Opciones de contexto: `reservedConcurrency` (omítela en cuentas con límite de 10), `modelId` (por defecto `us.amazon.nova-lite-v1:0`), `profileRegions`, `badges` (separados por comas, una key por badge), `budgetEmail`, `monthlyBudgetUsd` (por defecto 5).
 
-Remove everything: `npx cdk destroy MictlanGuardian`.
+Para borrar todo: `npx cdk destroy MictlanGuardian`.

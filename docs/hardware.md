@@ -1,95 +1,97 @@
-# Hardware Discovery Report — JSConf México 2026 Badge (Electronic Cats)
+# Reporte de descubrimiento de hardware: badge de JSConf México 2026 (Electronic Cats)
 
-Status: **Milestone 1 in progress. NOT cleared for device-specific display init or flashing.**
-Last updated: 2026-10-24
+**Español** · [English](en/hardware.md)
 
-Every fact below carries a confidence tag:
+Estado: **Milestone 1 en curso. TODAVÍA NO está autorizado inicializar la pantalla específica ni flashear.**
+Última actualización: 2026-10-24
 
-| Tag | Meaning |
+Cada dato de abajo lleva una etiqueta de confianza:
+
+| Etiqueta | Significado |
 |---|---|
-| `VERIFIED` | Confirmed by tool output or unambiguous physical evidence |
-| `OBSERVED` | Visible in photos, but marking is partly illegible or the role is inferred from layout |
-| `HYPOTHESIS` | Plausible engineering guess. **Must not be used in code** until promoted |
-| `UNKNOWN` | No evidence yet |
+| `VERIFIED` | Confirmado por la salida de una herramienta o por evidencia física sin ambigüedad |
+| `OBSERVED` | Se ve en las fotos, pero la marca es poco legible o la función se deduce por la ubicación |
+| `HYPOTHESIS` | Suposición de ingeniería razonable. **No se usa en el código** hasta confirmarla |
+| `UNKNOWN` | Todavía sin evidencia |
 
-## 1. Sources consulted
+## 1. Fuentes consultadas
 
-| Source | Result |
+| Fuente | Resultado |
 |---|---|
-| `github.com/ElectronicCats/badge_JSCON_2026` (URL printed on PCB silkscreen) | **HTTP 404** on 2026-10-24. Not public (private, renamed, or not yet published). |
-| `gh search repos --owner ElectronicCats jsconf` / `JSCON` | No results. |
-| ElectronicCats org repo list (100 most recent) | No JSConf repo. Other badges exist (HackGDL, BugCON, REcon…) but they are **different boards** and must not be used as a pin-mapping source. |
-| Web search "Electronic Cats JSConf México 2026 badge" | No documentation, schematic, or firmware found. |
-| Photos in `image/` (front off, front on, back) | Component identification below. |
-| macOS IORegistry (passive, no port opened) | USB descriptor below. |
+| `github.com/ElectronicCats/badge_JSCON_2026` (URL impresa en la serigrafía de la placa) | **HTTP 404** el 2026-10-24. No es público (privado, renombrado o aún sin publicar). |
+| `gh search repos --owner ElectronicCats jsconf` / `JSCON` | Sin resultados. |
+| Lista de repos de la organización ElectronicCats (los 100 más recientes) | No hay repo de JSConf. Existen otros badges (HackGDL, BugCON, REcon…), pero son **placas distintas** y no se deben usar como fuente de pines. |
+| Búsqueda web "Electronic Cats JSConf México 2026 badge" | No encontré documentación, esquemático ni firmware. |
+| Fotos en `image/` (frente apagado, frente encendido, reverso) | Identificación de componentes abajo. |
+| IORegistry de macOS (pasivo, sin abrir el puerto) | Descriptor USB abajo. |
 
-## 2. Verified / observed facts
+## 2. Datos verificados y observados
 
-### 2.1 MCU and module
+### 2.1 MCU y módulo
 
-| Item | Value | Tag | Evidence |
+| Elemento | Valor | Etiqueta | Evidencia |
 |---|---|---|---|
-| Module | Espressif **ESP32-S3-WROOM-1** (PCB antenna) | `VERIFIED` | Module shield marking, back photo |
-| Chip | ESP32-S3 (QFN56) rev v0.2, dual core, 240 MHz, Wi-Fi + BLE | `VERIFIED` | User's `esptool chip-id` |
-| Flash | 8 MB, Quad SPI, 3.3 V | `VERIFIED` | User's `esptool flash-id` |
-| Bootloader | ESP-IDF v5.5.5, 8 MB, 80 MHz, DIO | `VERIFIED` | User's `image-info` |
-| Module variant (N8 / N8R2 / N8R8) | ordering code not legible in photo | `UNKNOWN` | Determines PSRAM (0 / 2 MB quad / 8 MB octal) |
-| PSRAM | eFuse `PSRAM_CAP`/`PSRAM_VENDOR` = none (no in-package PSRAM). Vendor listing says WROOM-1-**N8** (no PSRAM). Prototype boot shows only internal heap (~381 KiB) | `HYPOTHESIS` (strong): **no PSRAM**. Design must fit in ~380 KiB internal RAM |
-| Security eFuses | `SECURE_BOOT_EN` = False, `SPI_BOOT_CRYPT_CNT` = Disable, `DIS_DOWNLOAD_MODE` = False | `VERIFIED` (`espefuse summary`, 2026-10-24) |
-| Current flash content | `app0` = `mictlan_card` c79819f-dirty, built 2026-10-24 12:57, IDF 5.5.5 (not stock). Stock Meshtastic backup (`0640a9ca…`) kept by Hazel on another computer | `VERIFIED` |
-| USB | Native USB-Serial/JTAG, VID `0x303A`, PID `0x1001`, product "USB JTAG_serial debug unit" | `VERIFIED` | `ioreg` (passive) |
-| Serial port | `/dev/cu.usbmodem101` (may change) | `VERIFIED` | `ls /dev/cu.usb*` |
+| Módulo | Espressif **ESP32-S3-WROOM-1** (antena en la placa) | `VERIFIED` | Marca en el blindaje del módulo, foto del reverso |
+| Chip | ESP32-S3 (QFN56) rev v0.2, doble núcleo, 240 MHz, Wi-Fi + BLE | `VERIFIED` | `esptool chip-id` de la usuaria |
+| Flash | 8 MB, Quad SPI, 3.3 V | `VERIFIED` | `esptool flash-id` de la usuaria |
+| Bootloader | ESP-IDF v5.5.5, 8 MB, 80 MHz, DIO | `VERIFIED` | `image-info` de la usuaria |
+| Variante del módulo (N8 / N8R2 / N8R8) | el código de pedido no se lee en la foto | `UNKNOWN` | Define la PSRAM (0 / 2 MB quad / 8 MB octal) |
+| PSRAM | eFuse `PSRAM_CAP`/`PSRAM_VENDOR` = ninguna (sin PSRAM dentro del chip). La página del vendedor dice WROOM-1-**N8** (sin PSRAM). El arranque del prototipo solo muestra heap interno (~381 KiB) | `HYPOTHESIS` (fuerte): **sin PSRAM**. El diseño debe caber en ~380 KiB de RAM interna |
+| eFuses de seguridad | `SECURE_BOOT_EN` = False, `SPI_BOOT_CRYPT_CNT` = Disable, `DIS_DOWNLOAD_MODE` = False | `VERIFIED` (`espefuse summary`, 2026-10-24) |
+| Contenido actual de la flash | `app0` = `mictlan_card` c79819f-dirty, compilado el 2026-10-24 12:57, IDF 5.5.5 (no es el original). El respaldo original de Meshtastic (`0640a9ca…`) lo tiene Hazel en otra computadora | `VERIFIED` |
+| USB | USB-Serial/JTAG nativo, VID `0x303A`, PID `0x1001`, producto "USB JTAG_serial debug unit" | `VERIFIED` | `ioreg` (pasivo) |
+| Puerto serial | `/dev/cu.usbmodem101` (puede cambiar) | `VERIFIED` | `ls /dev/cu.usb*` |
 
-The USB serial number equals the chip's base MAC. It is intentionally not reproduced in this repo.
+El número de serie USB es igual a la MAC base del chip. A propósito no se copia en este repo.
 
-### 2.2 Display
+### 2.2 Pantalla
 
-| Item | Value | Tag |
+| Elemento | Valor | Etiqueta |
 |---|---|---|
-| Type | Color TFT LCD, bar/stretched form factor, mounted landscape on the front | `OBSERVED` |
-| Aspect ratio | ~2.9–3.4 : 1 measured from photos; 428/142 = 3.01 | `OBSERVED` |
-| Interface | FPC flex into a connector with silkscreen **1** and **10**; vendor page says 10-pin 0.5 mm FPC | `OBSERVED` |
-| Bus type | 4-wire SPI (stock firmware contains Arduino SPI / `spiLock` paths; NV3007 2.79" modules are SPI) | `HYPOTHESIS` (strong) |
-| Backlight | Q2 + R3/R13/R14 next to the FPC; stock firmware logs `Power to TFT Backlight` | `HYPOTHESIS` (strong) |
-| **Controller** | **NV3007, 2.79", 142×428**. The exact `nv3007_279_init_operations` byte sequence from Arduino_GFX (`ff a5`, `9a 08`, `9b 08`, `9c b0`, `9d 16`, `9e c4`, gamma pairs `6c 29`/`7c 29`/`6d 31`…) is at flash offset `0xdc1b5`, inside leftover **stock** JSConf app code (past the end of the current prototype image at `0x48e30`). No ST7789/ILI9341 init found | `VERIFIED` (firmware evidence) — final confirmation = first color-fill test |
-| Resolution | 142×428 native (428×142 landscape) | `VERIFIED` (firmware evidence) |
-| Offsets | Arduino_GFX's 2.79" profile uses col offset 12 / 14, row 0 (panel RAM wider than glass). To confirm on the glass | `HYPOTHESIS` |
-| Color order / inversion | — | `UNKNOWN` (color-fill test) |
-| Moddable support | No NV3007 driver in Moddable `modules/drivers` → native C driver required (design D2) | `VERIFIED` |
-| Behavior with stock firmware | Photo shows dark olive band + purple band | `OBSERVED` |
-| Behavior with current prototype | Screen goes white then nothing. Log: `st7789: ready 428x142 madctl 0x60 xoff 0 yoff 14 spi 40000000 Hz`. ST7789 init sent to an NV3007 panel explains the white screen | `VERIFIED` (boot log + your observation) |
+| Tipo | LCD TFT a color, formato de barra alargada, montada horizontal al frente | `OBSERVED` |
+| Proporción | ~2.9–3.4 : 1 medida en las fotos; 428/142 = 3.01 | `OBSERVED` |
+| Interfaz | Cable flex FPC a un conector con serigrafía **1** y **10**; la página del vendedor dice FPC de 10 pines a 0.5 mm | `OBSERVED` |
+| Tipo de bus | SPI de 4 hilos (el firmware original tiene rutas de SPI de Arduino / `spiLock`; los módulos NV3007 de 2.79" son SPI) | `HYPOTHESIS` (fuerte) |
+| Backlight | Q2 + R3/R13/R14 junto al FPC; el firmware original registra `Power to TFT Backlight` | `HYPOTHESIS` (fuerte) |
+| **Controlador** | **NV3007, 2.79", 142×428**. La secuencia exacta de bytes `nv3007_279_init_operations` de Arduino_GFX (`ff a5`, `9a 08`, `9b 08`, `9c b0`, `9d 16`, `9e c4`, pares de gamma `6c 29`/`7c 29`/`6d 31`…) está en el offset `0xdc1b5` de la flash, dentro de restos del código de la app **original** de JSConf (después del final de la imagen actual del prototipo, en `0x48e30`). No encontré init de ST7789 ni ILI9341 | `VERIFIED` (evidencia en el firmware); la confirmación final es la primera prueba de relleno de color |
+| Resolución | 142×428 nativa (428×142 horizontal) | `VERIFIED` (evidencia en el firmware) |
+| Offsets | El perfil de 2.79" de Arduino_GFX usa offset de columna 12 / 14 y de fila 0 (la RAM del panel es más ancha que el vidrio). Por confirmar en la pantalla | `HYPOTHESIS` |
+| Orden de color / inversión | — | `UNKNOWN` (prueba de relleno de color) |
+| Soporte en Moddable | No hay driver de NV3007 en `modules/drivers` de Moddable → se necesita un driver nativo en C (diseño D2) | `VERIFIED` |
+| Comportamiento con el firmware original | La foto muestra una franja verde olivo oscura y una morada | `OBSERVED` |
+| Comportamiento con el prototipo actual | La pantalla se pone blanca y luego nada. Log: `st7789: ready 428x142 madctl 0x60 xoff 0 yoff 14 spi 40000000 Hz`. Mandar un init de ST7789 a un panel NV3007 explica la pantalla blanca | `VERIFIED` (log de arranque + tu observación) |
 
-The prototype's numbers (428×142, offset 14, ST7789) match Meshtastic's **Hackaday Communicator** variant, a different board. Its pins (SCK 38, MOSI 21, HSPI) are **not** adopted here.
+Los números del prototipo (428×142, offset 14, ST7789) coinciden con la variante **Hackaday Communicator** de Meshtastic, que es otra placa. Sus pines (SCK 38, MOSI 21, HSPI) **no** se usan aquí.
 
-Do not choose a driver by resemblance. Bar panels from different vendors use ST7789, ST7735, GC9107, NV3007, ILI9341 variants and others, each with different offsets.
+No elijas un driver por parecido. Las pantallas de barra de distintos fabricantes usan ST7789, ST7735, GC9107, NV3007, variantes de ILI9341 y otros, cada uno con offsets diferentes.
 
-### 2.3 Other components (back side)
+### 2.3 Otros componentes (reverso)
 
-| Ref / marking | Likely role | Tag |
+| Referencia / marca | Función probable | Etiqueta |
 |---|---|---|
-| VOLLGO module, "ISM: 915MHz LoRa", part code partially legible (`VG…S915N0S1`) | LoRa radio module | `OBSERVED` (part number to confirm) |
-| AE1, SMA connector | Antenna for the LoRa module | `OBSERVED` |
-| LoRa transceiver chip inside the module | — | `UNKNOWN` |
-| SOT-223 "JJ33 / 902623" + C6/C7 | 3.3 V linear regulator | `OBSERVED` |
-| F1, R1, R2 next to USB-C | Fuse + USB-C CC resistors | `HYPOTHESIS` |
-| C4, C5, R5 near RST/BOOT | EN reset RC network | `HYPOTHESIS` |
-| ON/OFF slide switch | Power switch | `VERIFIED` (silkscreen) |
-| Battery holder / connector | none visible in back photo | `UNKNOWN` — how is the badge powered when unplugged? |
+| Módulo VOLLGO, "ISM: 915MHz LoRa", código de parte poco legible (`VG…S915N0S1`) | Módulo de radio LoRa | `OBSERVED` (número de parte por confirmar) |
+| AE1, conector SMA | Antena del módulo LoRa | `OBSERVED` |
+| Chip transceptor LoRa dentro del módulo | — | `UNKNOWN` |
+| SOT-223 "JJ33 / 902623" + C6/C7 | Regulador lineal de 3.3 V | `OBSERVED` |
+| F1, R1, R2 junto al USB-C | Fusible + resistencias CC del USB-C | `HYPOTHESIS` |
+| C4, C5, R5 cerca de RST/BOOT | Red RC de reset en EN | `HYPOTHESIS` |
+| Switch deslizable ON/OFF | Interruptor de encendido | `VERIFIED` (serigrafía) |
+| Portapilas / conector de batería | no se ve en la foto del reverso | `UNKNOWN`: ¿cómo se alimenta el badge sin USB? |
 
-**New fact not in the original brief:** the board carries a 915 MHz LoRa module. That matters because:
-- It probably shares an SPI bus with the display, or uses a second SPI host. Either changes the display driver design.
-- Its CS line must be held inactive (normally high) when talking to the display on a shared bus, or bus traffic gets corrupted.
-- The SMA connector should not be left without an antenna if we ever transmit. Phase 1–3 have no LoRa feature, so firmware will keep the radio idle/asleep.
+**Dato nuevo que no estaba en el brief original:** la placa tiene un módulo LoRa de 915 MHz. Importa porque:
+- Probablemente comparte el bus SPI con la pantalla, o usa un segundo host SPI. Cualquiera de los dos cambia el diseño del driver de pantalla.
+- Su línea CS debe quedarse inactiva (normalmente en alto) mientras se le habla a la pantalla en un bus compartido; si no, el tráfico del bus se corrompe.
+- El conector SMA no debe quedarse sin antena si algún día transmitimos. Las fases 1 a 3 no usan LoRa, así que el firmware mantiene el radio inactivo.
 
-### 2.4 Buttons
+### 2.4 Botones
 
-| Button | Wiring | Tag |
+| Botón | Conexión | Etiqueta |
 |---|---|---|
-| UP, DOWN, BACK, SELECT (front) | The `mictlan_card` prototype (your earlier attempt, source on another computer) reacts correctly to presses: log shows `screen card` / `screen links` transitions on 2026-10-24. So its button GPIO config works, but the numbers are not printed | GPIOs `UNKNOWN`; a working config `VERIFIED` to exist in that source |
-| BOOT (rear) | On every ESP32-S3 design the download-mode button drives the GPIO0 strapping pin | `HYPOTHESIS` (standard practice, still to verify on this board) |
-| RST (rear) | CHIP_PU / EN | `HYPOTHESIS` |
+| UP, DOWN, BACK, SELECT (frente) | El prototipo `mictlan_card` (tu intento anterior, con el código en otra computadora) responde bien: el log muestra las transiciones `screen card` / `screen links` el 2026-10-24. Su configuración de GPIO de botones funciona, pero no imprime los números | GPIOs `UNKNOWN`; está `VERIFIED` que en ese código existe una configuración que funciona |
+| BOOT (reverso) | En todos los diseños con ESP32-S3, el botón de modo de descarga maneja el pin de strapping GPIO0 | `HYPOTHESIS` (práctica estándar, falta verificarla en esta placa) |
+| RST (reverso) | CHIP_PU / EN | `HYPOTHESIS` |
 
-### 2.5 Boot log of the current prototype (2026-10-24, MAC redacted)
+### 2.5 Log de arranque del prototipo actual (2026-10-24, MAC oculta)
 
 ```
 rst:0x15 (USB_UART_CHIP_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)
@@ -107,131 +109,131 @@ I (8107) mictlan: screen card
 I (18367) mictlan: screen links
 ```
 
-Reset quirk: software resets over USB (esptool `hard-reset`, RTS pulse) land in `boot:0x0 DOWNLOAD` on this Mac. Use the physical **RST** button to boot the app; use **BOOT held while plugging in** to enter download mode reliably.
+Detalle del reset: en esta Mac, los resets por software por USB (`hard-reset` de esptool, pulso de RTS) caen en `boot:0x0 DOWNLOAD`. Usa el botón físico **RST** para arrancar la app y **mantén BOOT al conectar el USB** para entrar al modo de descarga de forma confiable.
 
-### 2.6 Pin map (recovered from the stock firmware)
+### 2.6 Mapa de pines (recuperado del firmware original)
 
-Source: Hazel's earlier project `github.com/hsaenzG/mictlan-js`, branch `cursor/lcd-bus-pins` (`docs/hardware.md`, `firmware/badge/main/board.h`). Two independent methods, both on the **stock** JSConf Meshtastic image (SHA-256 `0640a9ca…`), never another board:
+Fuente: el proyecto anterior de Hazel, `github.com/hsaenzG/mictlan-js`, rama `cursor/lcd-bus-pins` (`docs/hardware.md`, `firmware/badge/main/board.h`). Son dos métodos independientes, ambos sobre la imagen **original** de JSConf con Meshtastic (SHA-256 `0640a9ca…`), nunca de otra placa:
 
-- **Stock boot log** (RST capture 2026-10-23, 115200 8N1, DTR/RTS cleared, nothing sent).
-- **Disassembly** of the stock `app0` with `xtensa-esp32s3-elf-objdump` (2026-10-24): the TFT `connect()` function's bus and panel constructors, with file offsets and instruction bytes recorded in that doc.
+- **Log de arranque original** (captura tras RST del 2026-10-23, 115200 8N1, DTR/RTS en bajo, sin enviar nada).
+- **Desensamblado** del `app0` original con `xtensa-esp32s3-elf-objdump` (2026-10-24): los constructores del bus y del panel en la función `connect()` del TFT, con offsets del archivo y bytes de instrucción anotados en ese documento.
 
-| Signal | GPIO | Source | Tag |
+| Señal | GPIO | Fuente | Etiqueta |
 |---|---|---|---|
-| BTN UP | 40 | Stock boot log `BadgeJsconButtons: UP=40 DOWN=43 SELECT=18 BACK=1` + button table at `0xE186C` | `VERIFIED` |
-| BTN DOWN | 43 | same | `VERIFIED` |
-| BTN SELECT | 18 | same | `VERIFIED` |
-| BTN BACK | 1 | same | `VERIFIED` |
-| Button mode | `INPUT_PULLUP` (Arduino mode 5) → active **low** | Disassembly at `0x1817F0` | `VERIFIED` |
-| LCD SCK | 12 | Bus object byte 11, attached to `FSPICLK_OUT_IDX` | `VERIFIED` (disassembly) |
-| LCD MOSI | 11 | Bus object byte 12, `FSPID_OUT_IDX` | `VERIFIED` (disassembly) |
-| LCD MISO | not connected | Bus object byte 13 = `0xFF` | `VERIFIED` (disassembly) |
-| LCD CS | 21 | Bus object byte 10, idle high | `VERIFIED` (disassembly) |
-| LCD DC | 9 | Bus object byte 9, low = command | `VERIFIED` (disassembly) |
-| LCD RST | 10 | Panel object byte 68; pulse high 100 ms / low 120 ms / high 120 ms | `VERIFIED` (disassembly) |
-| LCD backlight | 2 (plain GPIO high = on; stock applies brightness 153) | `pinMode(2, OUTPUT)` + `digitalWrite` | `VERIFIED` (disassembly) |
-| LCD bus | `SPI2_HOST`, mode 0, 40 MHz | Bus init literal `40000000` | `VERIFIED` (disassembly) |
-| LCD MADCTL | `0x60` (rotation 1, MX\|MV → landscape) | Panel rotation routine | `VERIFIED` (disassembly) |
-| LCD size | 142 × 428 (panel object halfwords `8e 00 ac 01`) | Matches the NV3007 init found here independently | `VERIFIED` (two sources) |
-| LoRa SPI | SCK 37, MISO 36, MOSI 35, NSS 38 (separate bus from the LCD) | Stock boot log `SPI.begin(...)` | `VERIFIED` |
-| LoRa control | LLCC68 driver; IRQ 48, RST 47, BUSY 39 | Stock boot log `SX126xInterface(...)` | `VERIFIED` |
+| BTN UP | 40 | Log original `BadgeJsconButtons: UP=40 DOWN=43 SELECT=18 BACK=1` + tabla de botones en `0xE186C` | `VERIFIED` |
+| BTN DOWN | 43 | igual | `VERIFIED` |
+| BTN SELECT | 18 | igual | `VERIFIED` |
+| BTN BACK | 1 | igual | `VERIFIED` |
+| Modo de los botones | `INPUT_PULLUP` (modo 5 de Arduino) → activos en **bajo** | Desensamblado en `0x1817F0` | `VERIFIED` |
+| LCD SCK | 12 | Byte 11 del objeto del bus, conectado a `FSPICLK_OUT_IDX` | `VERIFIED` (desensamblado) |
+| LCD MOSI | 11 | Byte 12 del objeto del bus, `FSPID_OUT_IDX` | `VERIFIED` (desensamblado) |
+| LCD MISO | sin conectar | Byte 13 del objeto del bus = `0xFF` | `VERIFIED` (desensamblado) |
+| LCD CS | 21 | Byte 10 del objeto del bus, en alto cuando está inactivo | `VERIFIED` (desensamblado) |
+| LCD DC | 9 | Byte 9 del objeto del bus, bajo = comando | `VERIFIED` (desensamblado) |
+| LCD RST | 10 | Byte 68 del objeto del panel; pulso alto 100 ms / bajo 120 ms / alto 120 ms | `VERIFIED` (desensamblado) |
+| LCD backlight | 2 (GPIO simple, alto = encendido; el original aplica brillo 153) | `pinMode(2, OUTPUT)` + `digitalWrite` | `VERIFIED` (desensamblado) |
+| Bus del LCD | `SPI2_HOST`, modo 0, 40 MHz | Literal `40000000` en el init del bus | `VERIFIED` (desensamblado) |
+| MADCTL del LCD | `0x60` (rotación 1, MX\|MV → horizontal) | Rutina de rotación del panel | `VERIFIED` (desensamblado) |
+| Tamaño del LCD | 142 × 428 (halfwords `8e 00 ac 01` en el objeto del panel) | Coincide con el init de NV3007 que encontré por separado | `VERIFIED` (dos fuentes) |
+| SPI de LoRa | SCK 37, MISO 36, MOSI 35, NSS 38 (bus separado del LCD) | Log original `SPI.begin(...)` | `VERIFIED` |
+| Control de LoRa | driver LLCC68; IRQ 48, RST 47, BUSY 39 | Log original `SX126xInterface(...)` | `VERIFIED` |
 
-Still open: battery sense, slide-switch GPIO.
+Sigue pendiente: medición de batería y GPIO del switch deslizable.
 
-### 2.7 First Hazel Badge OS boot on glass (2026-10-24, video `image/IMG_7774.MOV`)
+### 2.7 Primer arranque de Hazel Badge OS en la pantalla (2026-10-24, video `image/IMG_7774.MOV`)
 
-| Check | Result | Tag |
+| Revisión | Resultado | Etiqueta |
 |---|---|---|
-| Boot | Log: `hazel-badge-os: 428x142 ready` | `VERIFIED` |
-| Offsets (col 0 / row 14, MADCTL 0x60) | Full 428×142 area drawn, no garbage rows, nothing clipped | `VERIFIED` |
-| Color order | `#F5E000` shows yellow, white shows white → RGB order and byte order correct | `VERIFIED` |
-| Buttons | UP/DOWN/SELECT/BACK drive menu, links, QR, back navigation | `VERIFIED` |
-| Accents in JetBrains Mono TTF | `Sáenz`, `escanéame`, `menú` render | `VERIFIED` |
-| QR | LinkedIn QR renders with crisp black modules on white | `VERIFIED` |
-| **Near-black levels** | `#000000` (QR modules) is black, but `#0D0D0D` (background) shows as **light mint**; `#4A4A4A` shows dark gray. The lowest non-zero gray levels render bright | `VERIFIED` (visual). Root cause `HYPOTHESIS`: NV3007 2.79" gamma table (same one the stock firmware uses) |
+| Arranque | Log: `hazel-badge-os: 428x142 ready` | `VERIFIED` |
+| Offsets (columna 0 / fila 14, MADCTL 0x60) | Se dibuja todo el área de 428×142, sin filas de basura y sin cortes | `VERIFIED` |
+| Orden de color | `#F5E000` se ve amarillo y el blanco se ve blanco → orden RGB y de bytes correctos | `VERIFIED` |
+| Botones | UP/DOWN/SELECT/BACK manejan el menú, los links, el QR y el regreso | `VERIFIED` |
+| Acentos con JetBrains Mono TTF | `Sáenz`, `escanéame` y `menú` se dibujan bien | `VERIFIED` |
+| QR | El QR de LinkedIn sale con módulos negros nítidos sobre blanco | `VERIFIED` |
+| **Niveles casi negros** | `#000000` (módulos del QR) se ve negro, pero `#0D0D0D` (fondo) se ve **verde menta claro**; `#4A4A4A` se ve gris oscuro. Los niveles de gris más bajos (distintos de cero) se ven claros | `VERIFIED` (visual). Causa `HYPOTHESIS`: la tabla de gamma del NV3007 de 2.79" (la misma que usa el firmware original) |
 
-Mitigation in v0.1.1: background drawn as pure `#000000`. A gray-ramp test screen (About → SELECT) shows levels 0, 2, 4 … 255 to map which levels are affected before any gamma change.
+Mitigación en v0.1.1: el fondo se dibuja en `#000000` puro. Una pantalla de prueba con escala de grises (About → SELECT) muestra los niveles 0, 2, 4 … 255 para ver cuáles fallan antes de tocar la gamma.
 
-Follow-up (photos `image/IMG_7777.jpg`–`IMG_7780.jpg`): black text on the yellow focus bar reads light gray. Same cause: anti-aliased dark edges land on the bright low levels. Rule for UI: **no dark text on bright fills**; pure black on pure white without AA (QR) is fine. `▸`/`◂` exist in JetBrains Mono but are the *small* triangles and look like a dot at 11 px; use `→`/`←`.
+Seguimiento (fotos `image/IMG_7777.jpg`–`IMG_7780.jpg`): el texto negro sobre la barra amarilla de selección se ve gris claro. Es la misma causa: los bordes suavizados oscuros caen en los niveles bajos que se ven claros. Regla de interfaz: **nada de texto oscuro sobre fondos claros**; negro puro sobre blanco puro sin suavizado (el QR) está bien. `▸`/`◂` sí existen en JetBrains Mono, pero son los triángulos *pequeños* y a 11 px parecen un punto; usa `→`/`←`.
 
-v0.1.1 on glass (photos `image/IMG_7775.jpg`, `image/IMG_7776.jpg`): background reads black, white/gray/yellow text correct. Mitigation `VERIFIED`. Gray-ramp photo still pending, so the exact affected levels (and a possible gamma fix) remain open; until then avoid dark non-zero fills.
+v0.1.1 en la pantalla (fotos `image/IMG_7775.jpg`, `image/IMG_7776.jpg`): el fondo se ve negro y el texto blanco, gris y amarillo se ve bien. Mitigación `VERIFIED`. Falta la foto de la escala de grises, así que siguen abiertos los niveles exactos afectados (y una posible corrección de gamma); mientras tanto, evita rellenos oscuros distintos de cero.
 
-Why the prototype failed: it used these correct pins with an **ST7789 init** on an **NV3007** panel.
+Por qué falló el prototipo: usaba estos pines correctos con un **init de ST7789** en un panel **NV3007**.
 
-## 3. Unknowns that block Phase 1
+## 3. Pendientes que bloquean la Fase 1
 
-1. ~~Display controller, resolution~~ → NV3007 142×428 (firmware evidence). Offsets, color order, inversion still open.
-2. ~~Display pin mapping~~ → §2.6.
-3. ~~Bus sharing~~ → separate buses (§2.6).
-4. ~~Buttons~~ → §2.6.
-7. NV3007 X/Y offsets and RGB/BGR: resolved by the first color-fill test on hardware.
-5. ~~PSRAM~~ → almost certainly none.
-6. ~~Integrity of the flash backup~~ → verified (§5).
+1. ~~Controlador y resolución de la pantalla~~ → NV3007 142×428 (evidencia en el firmware). Offsets, orden de color e inversión siguen abiertos.
+2. ~~Mapa de pines de la pantalla~~ → §2.6.
+3. ~~Bus compartido~~ → buses separados (§2.6).
+4. ~~Botones~~ → §2.6.
+7. Offsets X/Y y RGB/BGR del NV3007: se resuelven con la primera prueba de relleno de color en el hardware.
+5. ~~PSRAM~~ → casi seguro no hay.
+6. ~~Integridad del respaldo de la flash~~ → verificado (§5).
 
-## 4. Proposed read-only identification plan
+## 4. Plan de identificación de solo lectura propuesto
 
-Ordered from zero risk to low risk. Nothing here writes to flash. Steps marked 🔌 touch the device (they reset it into the ROM bootloader, which interrupts the running firmware but changes nothing) and need your go-ahead.
+Ordenado de riesgo cero a riesgo bajo. Nada de esto escribe en la flash. Los pasos marcados con 🔌 tocan el dispositivo (lo reinician en el bootloader de la ROM, lo que interrumpe el firmware en ejecución pero no cambia nada) y necesitan tu visto bueno.
 
-### Step A — Get the repo (zero risk)
-Ask Electronic Cats (or the JSConf organizers) whether `badge_JSCON_2026` will be published or can be shared. A schematic or the firmware source resolves nearly every unknown at once.
+### Paso A: conseguir el repo (riesgo cero)
+Pregúntale a Electronic Cats (o a los organizadores de JSConf) si van a publicar `badge_JSCON_2026` o si lo pueden compartir. Un esquemático o el código del firmware resuelve casi todas las incógnitas de una vez.
 
-### Step B — Physical inspection (zero risk)
-Please send:
-1. A macro photo of the **WROOM-1 module label** (the line under the FCC ID shows `N8`, `N8R2` or `N8R8`).
-2. A macro photo of the **display flex cable** printing (the part code near `…08HY` on the flex) — it often maps straight to a panel datasheet.
-3. A photo of the **10-pin FPC connector** with the flex lifted, if you are comfortable (only with power off; FPC latches are fragile).
-4. A photo of the **edge/back of the display** if any sticker is visible.
-5. Full legible marking of the **VOLLGO module**.
-6. Whether there is a battery holder somewhere I can't see.
+### Paso B: inspección física (riesgo cero)
+Por favor manda:
+1. Una foto macro de la **etiqueta del módulo WROOM-1** (la línea bajo el FCC ID dice `N8`, `N8R2` o `N8R8`).
+2. Una foto macro de lo impreso en el **cable flex de la pantalla** (el código cerca de `…08HY` en el flex); muchas veces lleva directo a la hoja de datos del panel.
+3. Una foto del **conector FPC de 10 pines** con el flex levantado, si te sientes cómoda (solo con la placa apagada; los seguros de los FPC son frágiles).
+4. Una foto del **borde o reverso de la pantalla** si tiene alguna etiqueta.
+5. La marca completa y legible del **módulo VOLLGO**.
+6. Si hay un portapilas en algún lugar que yo no vea.
 
-### Step C — Re-create and verify the backup 🔌 (read-only)
-See `docs/backup-and-recovery.md`. Required before anything else touches the device.
+### Paso C: recrear y verificar el respaldo 🔌 (solo lectura)
+Ver `docs/backup-and-recovery.md`. Es obligatorio antes de que cualquier otra cosa toque el dispositivo.
 
-### Step D — Chip feature report 🔌 (read-only)
+### Paso D: reporte de características del chip 🔌 (solo lectura)
 ```sh
 python -m esptool --chip esp32s3 --port /dev/cu.usbmodem101 chip-id
 python -m esptool --chip esp32s3 --port /dev/cu.usbmodem101 flash-id
 ```
-Capture the **full** output, especially the `Features:` line (e.g. "Embedded PSRAM 2MB" or "Embedded Flash"), which settles part of the PSRAM question. Octal PSRAM on N8R8 is external to the chip and may not be listed; Step F covers that.
+Guarda la salida **completa**, sobre todo la línea `Features:` (por ejemplo "Embedded PSRAM 2MB" o "Embedded Flash"), que resuelve parte de la duda sobre la PSRAM. La PSRAM octal del N8R8 está fuera del chip y puede no aparecer; el Paso F cubre eso.
 
-### Step E — Partition table and app metadata (offline, on the backup file)
+### Paso E: tabla de particiones y metadatos de la app (sin el dispositivo, sobre el respaldo)
 ```sh
-# Default partition table offset is 0x8000 (confirm from bootloader config / boot log)
+# El offset por defecto de la tabla de particiones es 0x8000 (confírmalo con la config del bootloader o el log de arranque)
 dd if=jsconf-original.bin of=pt.bin bs=1 skip=$((0x8000)) count=$((0xC00))
-python gen_esp32part.py pt.bin            # from ESP-IDF components/partition_table
-python -m esptool --chip esp32s3 image-info app.bin   # after slicing the app partition at its offset
+python gen_esp32part.py pt.bin            # de components/partition_table en ESP-IDF
+python -m esptool --chip esp32s3 image-info app.bin   # después de recortar la partición de la app en su offset
 ```
-The app partition's `esp_app_desc_t` gives project name, version, IDF version and build date.
+El `esp_app_desc_t` de la partición de la app da el nombre del proyecto, la versión, la versión de IDF y la fecha de compilación.
 
-### Step F — Static string analysis of the app image (offline)
+### Paso F: análisis estático de cadenas de la imagen de la app (sin el dispositivo)
 ```sh
 strings -n 6 app.bin | grep -iE 'st77|ili9|gc9|nv30|lcd|panel|lvgl|lv_|tft|lovyan|psram|spiram|sx12|lora|radiolib|gpio|width|height'
 ```
-Looks for: driver names (`esp_lcd_st7789`, `TFT_eSPI`, `LovyanGFX`, LVGL), PSRAM init messages, LoRa library names, log tags. Pin numbers are compiled in as immediates, so strings usually won't show them; log format strings sometimes will.
+Busca: nombres de drivers (`esp_lcd_st7789`, `TFT_eSPI`, `LovyanGFX`, LVGL), mensajes de inicio de PSRAM, nombres de librerías de LoRa y etiquetas de log. Los números de pin se compilan como valores inmediatos, así que las cadenas casi nunca los muestran; los formatos de log a veces sí.
 
-Privacy rule: if the NVS partition contains Wi-Fi credentials or tokens, they stay on this Mac. Nothing from the dump is uploaded anywhere.
+Regla de privacidad: si la partición NVS tiene credenciales de Wi-Fi o tokens, se quedan en esta Mac. Nada del dump se sube a ningún lado.
 
-### Step G — Boot log capture 🔌 (read-only)
-Open the serial console and press RST:
+### Paso G: capturar el log de arranque 🔌 (solo lectura)
+Abre la consola serial y presiona RST:
 ```sh
 python -m serial.tools.miniterm /dev/cu.usbmodem101 115200
 ```
-ESP-IDF prints PSRAM detection, partition selection, and any `ESP_LOGI` lines the firmware emits (driver tags, sometimes resolutions or pins).
+ESP-IDF imprime la detección de PSRAM, la selección de partición y cualquier línea `ESP_LOGI` que emita el firmware (etiquetas de drivers, a veces resoluciones o pines).
 
-### Step H — Continuity mapping (zero electrical risk, power OFF, USB unplugged)
-With a multimeter in continuity mode, trace each front button pad and each of the 10 FPC pads to WROOM-1 castellated pins, then convert module pin → GPIO with the WROOM-1 datasheet pinout. This is the most reliable way to get the mapping if no schematic appears.
+### Paso H: mapeo de continuidad (cero riesgo eléctrico, con la placa APAGADA y el USB desconectado)
+Con un multímetro en modo continuidad, sigue cada pad de los botones del frente y cada uno de los 10 pads del FPC hasta los pines del borde del WROOM-1, y luego convierte pin del módulo → GPIO con el pinout de la hoja de datos del WROOM-1. Es la forma más confiable de obtener el mapa si no aparece un esquemático.
 
-### Step I — RAM-only probe firmware 🔌 (needs explicit approval; does not write flash)
-`esptool load-ram` runs a small image from SRAM without touching flash; a reset returns to the original firmware. Two probes:
-1. **Input scan:** configure candidate GPIOs as inputs with internal pull-ups, print levels while you press each button. Excludes strapping pins (0, 3, 45, 46), flash pins (26–32), PSRAM pins (33–37 if octal) and USB (19/20). No pin is driven as output.
-2. **Display probe:** only after B/E/F/H give a controller and pins. Sends `RDDID (0x04)` / `RDID1-3` reads if MISO exists, then a fill-color test.
+### Paso I: firmware de prueba solo en RAM 🔌 (necesita aprobación explícita; no escribe la flash)
+`esptool load-ram` corre una imagen pequeña desde la SRAM sin tocar la flash; al reiniciar vuelve el firmware original. Dos pruebas:
+1. **Lectura de entradas:** configura los GPIO candidatos como entradas con pull-up interno e imprime sus niveles mientras presionas cada botón. Excluye los pines de strapping (0, 3, 45, 46), los de flash (26–32), los de PSRAM (33–37 si es octal) y los de USB (19/20). Ningún pin se maneja como salida.
+2. **Prueba de pantalla:** solo después de que B/E/F/H den un controlador y sus pines. Manda lecturas `RDDID (0x04)` / `RDID1-3` si existe MISO y luego una prueba de relleno de color.
 
-Probe 1 is low risk. Probe 2 drives outputs and is only allowed once the pins are mapped.
+La prueba 1 es de bajo riesgo. La prueba 2 maneja salidas y solo se permite cuando los pines ya están mapeados.
 
-## 5. Backups
+## 5. Respaldos
 
-- Current chip state: `~/esp32-dev/backups/badge-2026-10-24-mictlan_card.bin`, SHA-256 `45049573431b3fe60fbaf99386102c5db54e421343d39fdc486b286fa0748e73`. Read twice (hashes match), `verify-flash` passed.
-- Stock JSConf Meshtastic image (SHA-256 `0640a9ca…`): kept by Hazel on another computer. Not on this Mac.
+- Estado actual del chip: `~/esp32-dev/backups/badge-2026-10-24-mictlan_card.bin`, SHA-256 `45049573431b3fe60fbaf99386102c5db54e421343d39fdc486b286fa0748e73`. Leído dos veces (hashes iguales), `verify-flash` aprobado.
+- Imagen original de JSConf con Meshtastic (SHA-256 `0640a9ca…`): la tiene Hazel en otra computadora. No está en esta Mac.
 
-## 6. Change log
-- 2026-10-24 — Initial report from photos, GitHub/web search, passive USB enumeration.
+## 6. Historial de cambios
+- 2026-10-24: reporte inicial a partir de fotos, búsqueda en GitHub y web, y enumeración USB pasiva.

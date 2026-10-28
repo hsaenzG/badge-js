@@ -1,8 +1,10 @@
 # Hazel Badge OS
 
-Custom firmware for the Electronic Cats **JSConf México 2026** badge, with every app written in **TypeScript** and running on the badge's own JavaScript engine (Moddable SDK / XS).
+**Español** · [English](README.en.md)
 
-Hardware: ESP32-S3-WROOM-1 (no PSRAM), 8 MB flash, NV3007 2.79" color TFT (428×142), 4 front buttons, 915 MHz LoRa module.
+Firmware propio para el badge de **JSConf México 2026** de Electronic Cats. Todas las apps están escritas en **TypeScript** y corren en el motor de JavaScript del propio badge (Moddable SDK / XS).
+
+Hardware: ESP32-S3-WROOM-1 (sin PSRAM), 8 MB de flash, pantalla TFT a color NV3007 de 2.79" (428×142), 4 botones al frente y un módulo LoRa de 915 MHz.
 
 ```
 >_ whoami
@@ -11,45 +13,45 @@ Developer Advocate @ AWS
 SERVERLESS · GENAI · LATAM
 ```
 
-## Status
+## Estado
 
-| Phase | What | State |
+| Fase | Qué es | Estado |
 |---|---|---|
-| 1 | Animated digital business card: typing intro, `whoami`, menu, card, GitHub profile, links + QR | ✅ On the badge |
-| 2 | **Mictlán.js**: Día de Muertos frog auto-runner with 4 JavaScript challenges and chiptune sound | ✅ On the badge (22–31 fps) and in the browser simulator |
-| 3 | **El Guardián del Código**: AI hints, cheers and farewells from Strands Harness + Amazon Bedrock (Nova Lite) | ✅ Backend live in us-east-2 · ✅ Badge goes online over Wi-Fi (phone hotspot) |
+| 1 | Tarjeta de presentación animada: intro con tecleo, `whoami`, menú, tarjeta, perfil de GitHub, links con QR | ✅ En el badge |
+| 2 | **Mictlán.js**: auto-runner de Día de Muertos con una rana, 4 retos de JavaScript y sonido chiptune | ✅ En el badge (22–31 fps) y en el simulador del navegador |
+| 3 | **El Guardián del Código**: pistas, ánimos y despedidas con IA, usando Strands Harness y Amazon Bedrock (Nova Lite) | ✅ Backend en us-east-2 · ✅ El badge se conecta por Wi-Fi (hotspot del teléfono) |
 
-Known issues and next steps are listed [at the end](#known-issues).
+Los problemas conocidos y los siguientes pasos están [al final](#problemas-conocidos).
 
-## Architecture
+## Arquitectura
 
 ```mermaid
 flowchart LR
   subgraph Badge["Badge · ESP32-S3 · Moddable XS"]
     direction TB
-    Apps["src/apps/main.ts<br/>card · menu · Mictlán.js host"]
-    Core["src/core (pure TypeScript)<br/>typewriter · input FSM · nav<br/>game engine · renderer · Guardián client"]
-    Platform["src/platform<br/>buttons · Poco Gfx · Wi-Fi + HTTPS"]
-    Target["hosts/badge<br/>NV3007 init · pins · board setup"]
-    NVS[("NVS<br/>Wi-Fi + API key<br/>(provisioned, not compiled in)")]
+    Apps["src/apps/main.ts<br/>tarjeta · menú · host de Mictlán.js"]
+    Core["src/core (TypeScript puro)<br/>tecleo · botones · navegación<br/>motor del juego · render · cliente del Guardián"]
+    Platform["src/platform<br/>botones · Gfx con Poco · Wi-Fi + HTTPS"]
+    Target["hosts/badge<br/>init del NV3007 · pines · arranque"]
+    NVS[("NVS<br/>Wi-Fi + API key<br/>(se graban aparte, no van en el firmware)")]
     Apps --> Core
     Apps --> Platform
     Platform --> Target
-    Platform -. reads .-> NVS
+    Platform -. lee .-> NVS
   end
 
-  subgraph Desktop["Desktop"]
-    Sim["sim/<br/>browser simulator<br/>Canvas Gfx · WebAudio"]
+  subgraph Desktop["Computadora"]
+    Sim["sim/<br/>simulador en el navegador<br/>Canvas · WebAudio"]
     Tests["tests/ · backend/test<br/>Vitest"]
   end
 
-  subgraph AWS["AWS · us-east-2 · CDK stack MictlanGuardian"]
+  subgraph AWS["AWS · us-east-2 · stack de CDK MictlanGuardian"]
     direction TB
-    APIGW["API Gateway (REST)<br/>x-api-key · usage plan<br/>1 rps · 200/day"]
-    Lambda["Lambda · Node 24 · ARM64<br/>Zod validation · fallbacks"]
-    Harness["Strands Harness agent<br/>locked down: no tools,<br/>no memory, no sessions"]
+    APIGW["API Gateway (REST)<br/>x-api-key · usage plan<br/>1 req/s · 200 al día"]
+    Lambda["Lambda · Node 24 · ARM64<br/>validación con Zod · respaldos"]
+    Harness["Agente con Strands Harness<br/>bloqueado: sin herramientas,<br/>sin memoria, sin sesiones"]
     Bedrock["Amazon Bedrock<br/>Nova Lite · maxTokens 300"]
-    DDB[("DynamoDB<br/>pending challenges · TTL 30 min")]
+    DDB[("DynamoDB<br/>retos pendientes · TTL 30 min")]
     APIGW --> Lambda --> Harness --> Bedrock
     Lambda --> DDB
   end
@@ -60,75 +62,75 @@ flowchart LR
   Tests --> Lambda
 ```
 
-**One codebase, three runtimes.** Everything in `src/core` is pure TypeScript with no device APIs. The same game engine, renderer and Guardián client run on the badge (Moddable XS), in the browser simulator, and under Vitest in Node. Only the thin adapters differ:
+**Un solo código, tres lugares donde corre.** Todo lo que está en `src/core` es TypeScript puro, sin APIs del dispositivo. El mismo motor del juego, el render y el cliente del Guardián corren en el badge (Moddable XS), en el simulador del navegador y en Node con Vitest. Solo cambian los adaptadores:
 
-| Concern | Badge (`src/platform`, `hosts/badge`) | Simulator (`sim/`) |
+| Tema | Badge (`src/platform`, `hosts/badge`) | Simulador (`sim/`) |
 |---|---|---|
-| Drawing | Commodetto Poco + JetBrains Mono TTF, panel-safe palette | Canvas 2D, ×3 pixelated |
-| Input | ECMA-419 `Digital` on GPIO 40/43/18/1, debounced by `core/inputFsm` | Keyboard |
-| Sound | Events emitted; no buzzer on the board yet | WebAudio square/triangle |
-| Network | Wi-Fi scan → connect → NTP → HTTPS `fetch` | Simulated replies (`?online=1`) |
+| Dibujo | Commodetto Poco + JetBrains Mono TTF, con paleta segura para la pantalla | Canvas 2D, ×3 pixelado |
+| Botones | ECMA-419 `Digital` en GPIO 40/43/18/1, con antirrebote en `core/inputFsm` | Teclado |
+| Sonido | Se generan los eventos; la placa todavía no tiene buzzer | WebAudio (onda cuadrada y triangular) |
+| Red | Escaneo de Wi-Fi → conexión → NTP → `fetch` por HTTPS | Respuestas simuladas (`?online=1`) |
 
-### Online Guardián flow
+### Cómo funciona el Guardián en línea
 
 ```mermaid
 sequenceDiagram
-  participant P as Player
-  participant G as Game core
-  participant B as Badge host
+  participant P as Jugadora
+  participant G as Núcleo del juego
+  participant B as Host en el badge
   participant API as API Gateway + Lambda
   participant AI as Strands Harness → Nova
-  P->>G: wrong answer
-  G->>G: show the local hint immediately
+  P->>G: respuesta incorrecta
+  G->>G: muestra la pista local de inmediato
   G-->>B: GuardianRequest {kind: hint, questionId, token}
-  alt online
+  alt en línea
     B->>API: POST /v1/message (x-api-key)
-    API->>AI: prompt built from enums only
-    AI-->>API: structured output (Zod)
+    API->>AI: prompt armado solo con enums
+    AI-->>API: salida estructurada (Zod)
     API-->>B: {v:1, text ≤ 140, source}
     B->>G: guardianReply(token, text)
-    G->>G: replace the hint if the player is still on that screen
-  else offline, timeout or error
-    B->>G: nothing: the local hint stays
+    G->>G: reemplaza la pista si la jugadora sigue en esa pantalla
+  else sin red, timeout o error
+    B->>G: nada: se queda la pista local
   end
 ```
 
-Design rules behind it:
-- **Offline first.** The game never waits on the network. Local text shows immediately, and an AI reply replaces it only if it arrives while the player is still on that screen (tokens per screen; stale replies are dropped).
-- **No free text reaches the model.** Requests carry only enums and numbers, validated with `.strict()` Zod schemas on both ends.
-- **The badge never learns the answer** to an online challenge. The server keeps it in DynamoDB and checks submissions. AI-written challenges are only accepted after the server **runs the code** in a sandbox and confirms the marked answer.
-- **Secrets stay out of the firmware and the repo.** Wi-Fi and the API key live in NVS, written from a separate image.
+Las reglas de diseño detrás de esto:
+- **Offline primero.** El juego nunca espera a la red. El texto local aparece de inmediato, y una respuesta de la IA solo lo reemplaza si llega mientras la jugadora sigue en esa pantalla. Cada pantalla tiene su token, y las respuestas atrasadas se descartan.
+- **Al modelo no le llega texto libre.** Las peticiones solo llevan enums y números, validados con esquemas Zod `.strict()` en los dos lados.
+- **El badge nunca conoce la respuesta** de un reto en línea. El servidor la guarda en DynamoDB y revisa lo que manda la jugadora. Un reto escrito por la IA solo se acepta si el servidor **ejecuta el código** en un sandbox y confirma que la respuesta marcada es correcta.
+- **Los secretos no van en el firmware ni en el repo.** El Wi-Fi y la API key viven en el NVS, que se graba desde una imagen aparte.
 
-More detail: [`docs/architecture.md`](docs/architecture.md).
+Más detalle en [`docs/architecture.md`](docs/architecture.md).
 
-## Repository layout
+## Estructura del repo
 
 ```
-src/core/        pure TS: typewriter, inputFsm, nav, content, badgeText, netStatus, guardianClient
-src/core/game/   Mictlán.js: game state machine, level, questions, sprites, palette, sound, renderer
-src/apps/        badge app (Poco screens + game host)
-src/platform/    Moddable adapters: buttons, Poco Gfx, Wi-Fi/HTTPS
-hosts/badge/     Moddable target for this badge (NV3007 registers, pins, XS memory sizing)
-sim/             browser simulator
-backend/         Phase 3: Lambda + Strands Harness + CDK stack
-scripts/         build-badge.sh (build only), provision-badge.py (NVS image)
-tests/           Vitest suites (badge core, game, simulator audio)
-docs/            hardware, architecture, game design, backup and recovery
+src/core/        TS puro: tecleo, botones, navegación, contenido, badgeText, netStatus, guardianClient
+src/core/game/   Mictlán.js: máquina de estados, nivel, preguntas, sprites, paleta, sonido, render
+src/apps/        app del badge (pantallas con Poco + host del juego)
+src/platform/    adaptadores de Moddable: botones, Gfx con Poco, Wi-Fi/HTTPS
+hosts/badge/     target de Moddable para este badge (registros del NV3007, pines, memoria de XS)
+sim/             simulador en el navegador
+backend/         Fase 3: Lambda + Strands Harness + stack de CDK
+scripts/         build-badge.sh (solo compila), provision-badge.py (imagen NVS)
+tests/           pruebas con Vitest (núcleo del badge, juego, audio del simulador)
+docs/            hardware, arquitectura, diseño del juego, respaldo y recuperación (inglés en docs/en/)
 ```
 
-## Build and run
+## Compilar y correr
 
-Requires ESP-IDF v6.1 (`~/esp/esp-idf-v6.1`), the Moddable SDK (`~/Projects/moddable`), Node 20+, and `brew install cmake ninja`.
+Necesitas ESP-IDF v6.1 (`~/esp/esp-idf-v6.1`), el Moddable SDK (`~/Projects/moddable`), Node 20+ y `brew install cmake ninja`.
 
 ```sh
 npm install
-npm test                 # 142 tests: core, game, simulator, backend
-./scripts/build-badge.sh # build only — never flashes; fails if XS memory won't fit in RAM
-npm run sim              # simulator → http://127.0.0.1:4173/
+npm test                 # 142 pruebas: núcleo, juego, simulador, backend
+./scripts/build-badge.sh # solo compila, nunca flashea; falla si la memoria de XS no cabe en la RAM
+npm run sim              # simulador → http://127.0.0.1:4173/
 ```
 
-Simulator controls: ↑/W jump · ↓/S crouch · Enter/Space SELECT · Esc/⌫ BACK.
-Dev shortcuts: `?online=1`, `?skip=challenge&flower=2`, `?skip=feedback`, `?skip=victory`, `?skip=retry`, `?skip=pause`.
+Controles del simulador: ↑/W saltar · ↓/S agacharse · Enter/Espacio SELECT · Esc/⌫ BACK.
+Atajos para desarrollo: `?online=1`, `?skip=challenge&flower=2`, `?skip=feedback`, `?skip=victory`, `?skip=retry`, `?skip=pause`.
 
 ### Backend
 
@@ -138,30 +140,31 @@ export AWS_PROFILE=free-tier-Strands CDK_DEFAULT_REGION=us-east-2
 npm run deploy -- -c profileRegions=us-east-1,us-east-2,us-west-2 -c budgetEmail=<email>
 ```
 
-Details, outputs and teardown: [`backend/README.md`](backend/README.md).
+Detalles, salidas y cómo borrarlo: [`backend/README.md`](backend/README.md).
 
-### Going online on the badge
+### Conectar el badge a internet
 
-1. Create `~/esp32-dev/secrets/wifi.env` (`chmod 600`) with `WIFI_SSID=` and `WIFI_PASSWORD=`. Use a **2.4 GHz** network. A phone hotspot works; on iPhone, turn on *Maximize Compatibility*.
-2. `python3 scripts/provision-badge.py` builds `~/esp32-dev/secrets/badge-nvs.bin`. It reads the API key from the deployed stack and never prints secrets.
-3. Flash the NVS image at `0x9000` (approved step, see below).
-4. Open Mictlán.js. The radio starts only then, and the status shows on the title screen and in About.
+1. Crea `~/esp32-dev/secrets/wifi.env` (con `chmod 600`) con `WIFI_SSID=` y `WIFI_PASSWORD=`. Usa una red de **2.4 GHz**. El hotspot del teléfono funciona; en iPhone, activa *Maximizar compatibilidad*.
+2. `python3 scripts/provision-badge.py` genera `~/esp32-dev/secrets/badge-nvs.bin`. Lee la API key del stack desplegado y nunca imprime secretos.
+3. Flashea la imagen NVS en `0x9000` (es un paso que se aprueba aparte, ver abajo).
+4. Abre Mictlán.js. El radio se enciende solo en ese momento, y el estado aparece en la pantalla de título y en About.
 
-## Safety
+## Seguridad
 
-- The repo never stores flash dumps, credentials or device identifiers.
-- `build-badge.sh` only builds. Flashing happens only after the pre-flash checklist in [`docs/backup-and-recovery.md`](docs/backup-and-recovery.md) and the owner's approval of the exact command.
-- Verified full backups of the original firmware are kept outside the repo.
-- The badge has no flash encryption, so anyone holding it can read its NVS. Use a guest or hotspot network, and revoke the per-badge API key if the badge is lost.
+- El repo nunca guarda dumps de la flash, credenciales ni identificadores del dispositivo.
+- `build-badge.sh` solo compila. Solo se flashea después de completar el checklist de [`docs/backup-and-recovery.md`](docs/backup-and-recovery.md) y con la aprobación de la dueña para el comando exacto.
+- Los respaldos completos y verificados del firmware original se guardan fuera del repo.
+- El badge no tiene cifrado de flash, así que cualquiera con el badge en la mano puede leer su NVS. Usa una red de invitados o el hotspot, y revoca la API key del badge si lo pierdes.
 
-## Docs
+## Documentación
 
 - Spec: [`requirements`](.kiro/specs/hazel-badge-os/requirements.md) · [`design`](.kiro/specs/hazel-badge-os/design.md) · [`tasks`](.kiro/specs/hazel-badge-os/tasks.md)
-- [Hardware discovery report](docs/hardware.md) · [Architecture](docs/architecture.md) · [Game design](docs/game-design.md) · [Backup and recovery](docs/backup-and-recovery.md)
+- [Reporte de hardware](docs/hardware.md) · [Arquitectura](docs/architecture.md) · [Diseño del juego](docs/game-design.md) · [Respaldo y recuperación](docs/backup-and-recovery.md)
+- Versión en inglés: [`README.en.md`](README.en.md) · [`docs/en/`](docs/en/) · [`.kiro/specs/hazel-badge-os/en/`](.kiro/specs/hazel-badge-os/en/)
 
-## Known issues
+## Problemas conocidos
 
-- **JavaScript stack overflow while online.** The serial log showed one `XS abort: JavaScript stack overflow` during an online session; the badge rebooted and reconnected. The likely cause is the JavaScript TLS stack against the 512-slot XS stack. Under investigation.
-- **Network diagnostics not yet on the badge.** Scan-first connection with specific failure reasons ("no veo la red", "contraseña", "sin internet"), the status line on the game title and 30 s retries are built and tested but not flashed yet.
-- **No sound on hardware.** The board has no buzzer. Sound events are emitted and ready for a piezo on a verified free GPIO.
-- **Burst throttling.** The API Gateway per-second limit did not stop a 6-request burst. The daily quota and budget alert still cap cost.
+- **Desbordamiento de pila de JavaScript en línea.** El log serial mostró una vez `XS abort: JavaScript stack overflow` durante una sesión en línea; el badge se reinició y volvió a conectarse. La causa probable es la pila de TLS en JavaScript contra los 512 slots de pila de XS. Lo estoy investigando.
+- **Diagnóstico de red todavía sin flashear.** Ya están compilados y probados: la conexión que escanea primero y da el motivo exacto si falla ("no veo la red", "contraseña", "sin internet"), la línea de estado en el título del juego y los reintentos cada 30 s. Falta flashearlos.
+- **Sin sonido en el hardware.** La placa no tiene buzzer. Los eventos de sonido ya se generan y están listos para un piezo en un GPIO libre verificado.
+- **Límite por ráfagas.** El límite por segundo de API Gateway no frenó una ráfaga de 6 peticiones. El tope diario y la alerta de presupuesto siguen acotando el costo.

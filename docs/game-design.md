@@ -1,120 +1,122 @@
-# Mictlán.js — Game Design
+# Mictlán.js: diseño del juego
+
+**Español** · [English](en/game-design.md)
 
 > *Every developer has a journey. Every agent needs a guide.*
 
-Phase 2 of Hazel Badge OS. Full brief: `game.md`. This document is the playable design; requirements live in `.kiro/specs/hazel-badge-os/requirements.md` (R3).
+Fase 2 de Hazel Badge OS. El brief completo está en `game.md`. Este documento describe el diseño jugable; los requerimientos están en `.kiro/specs/hazel-badge-os/requirements.md` (R3).
 
-## 1. Constraints that shape the game
+## 1. Restricciones que dan forma al juego
 
-| Constraint | Consequence |
+| Restricción | Consecuencia |
 |---|---|
-| Screen 428×142 landscape (NV3007) | Side-scroller with a low horizon; HUD on one 12 px row |
-| Only UP, DOWN, SELECT, BACK | **Auto-runner**: the world scrolls, the player jumps (UP) and crouches (DOWN) |
-| No PSRAM, ~380 KB RAM, XS GC | Fixed entity pools, integer physics, level is static data |
-| Panel renders very dark non-zero grays bright | Badge uses a panel-safe palette mapping (see §6); no dark text on bright fills |
-| Offline first | Local question bank, local hints and explanations |
+| Pantalla horizontal de 428×142 (NV3007) | Side-scroller con el horizonte bajo; el HUD ocupa una fila de 12 px |
+| Solo UP, DOWN, SELECT y BACK | **Auto-runner**: el mundo avanza solo, la jugadora salta (UP) y se agacha (DOWN) |
+| Sin PSRAM, ~380 KB de RAM, GC de XS | Grupos fijos de entidades, física con enteros, el nivel es un dato estático |
+| La pantalla muestra claros los grises muy oscuros (pero no negros) | El badge usa una paleta segura para la pantalla (ver §6); nada de texto oscuro sobre fondos claros |
+| Offline primero | Banco de preguntas, pistas y explicaciones locales |
 
-## 2. Loop
+## 2. Ciclo de juego
 
 ```
-TITLE ──SELECT──► INTRO (Guardián, 3 lines) ──► RUN
-RUN ── reach flower ──► CHALLENGE ── correct ──► FEEDBACK ──► RUN (checkpoint saved)
-                                   └─ wrong ───► FEEDBACK (hint) ──► CHALLENGE
-RUN ── 0 hearts ──► RETRY ──SELECT──► RUN from last checkpoint (3 hearts)
-RUN ── 4 flowers + reach ofrenda ──► VICTORY ──SELECT──► TITLE (replay)
-RUN ──BACK──► PAUSE (continuar · reiniciar · salir)
+TÍTULO ──SELECT──► INTRO (Guardián, 3 líneas) ──► CARRERA
+CARRERA ── llega a una flor ──► RETO ── correcta ──► RESPUESTA ──► CARRERA (se guarda el checkpoint)
+                                   └─ incorrecta ──► RESPUESTA (pista) ──► RETO
+CARRERA ── 0 corazones ──► REINTENTO ──SELECT──► CARRERA desde el último checkpoint (3 corazones)
+CARRERA ── 4 flores + llega a la ofrenda ──► VICTORIA ──SELECT──► TÍTULO (otra partida)
+CARRERA ──BACK──► PAUSA (continuar · reiniciar · salir)
 ```
 
-Target playtime 3–5 min: about 2 min of running (4 stretches of ~30 s) plus four challenges.
+Duración objetivo: 3 a 5 minutos, con unos 2 minutos de carrera (4 tramos de ~30 s) más los cuatro retos.
 
-## 3. Controls
+## 3. Controles
 
-| Button | RUN | CHALLENGE | Menus / screens |
+| Botón | CARRERA | RETO | Menús y pantallas |
 |---|---|---|---|
-| UP | jump (only on the ground) | previous option | previous item |
-| DOWN | crouch while held | next option | next item |
-| SELECT | — | confirm | confirm / continue |
-| BACK | pause | pause | back |
+| UP | saltar (solo en el piso) | opción anterior | elemento anterior |
+| DOWN | agacharse mientras se mantiene | opción siguiente | elemento siguiente |
+| SELECT | — | confirmar | confirmar / continuar |
+| BACK | pausa | pausa | regresar |
 
-## 4. World
+## 4. El mundo
 
-- **Path of the Mictlán**: purple night sky, distant temple silhouette, a strip of papel picado scrolling slowly (parallax), marigold path on the ground.
-- **Obstacles**
-  - *Calaverita*: a small decorated sugar skull on the path → **jump**. Smiling, never scary.
-  - *Papel picado* hanging low → **crouch**.
-- **Pickups**
-  - *Pétalos* of cempasúchil: score only.
-  - *Flor mágica* ×4: Variables, Functions, Promises, Objects. Touching one opens its challenge.
-- **Ofrenda**: altar with candles, marigolds, and a glowing portal. Appears after the 4th flower.
-- **Hearts**: 3. A hit costs one heart plus 1.2 s of blinking invulnerability. Checkpoints = the last solved flower.
+- **El camino del Mictlán**: cielo nocturno morado, la silueta de un templo a lo lejos, una tira de papel picado que se mueve despacio (parallax) y un camino de cempasúchil en el piso.
+- **Obstáculos**
+  - *Calaverita*: una calavera de azúcar decorada en el camino → **saltar**. Sonríe, nunca da miedo.
+  - *Papel picado* colgado bajo → **agacharse**.
+- **Para recoger**
+  - *Pétalos* de cempasúchil: solo suman puntos.
+  - *Flor mágica* ×4: Variables, Functions, Promises y Objects. Al tocar una se abre su reto.
+- **Ofrenda**: altar con velas, cempasúchil y un portal que brilla. Aparece después de la cuarta flor.
+- **Corazones**: 3. Cada golpe quita un corazón y da 1.2 s de invulnerabilidad parpadeando. El checkpoint es la última flor resuelta.
 
-Cultural tone: celebratory, warm, respectful. Calaveritas smile, the ofrenda honors memory, nothing gory.
+Tono cultural: festivo, cálido y respetuoso. Las calaveritas sonríen, la ofrenda honra la memoria y no hay nada sangriento.
 
-## 5. Characters
+## 5. Personajes
 
-- **Rana (player)**: an original 12×12 pixel frog, drawn at 2×. Big round eyes, a yellow `>_` badge on its chest (a nod to the terminal), marigold-orange cheeks. Frames: idle, run (2), jump, crouch, hurt, celebrate. Visually distinct from the Strands Agents mascot. No public brand guidelines for that mascot were found (strandsagents.com, 2026-10-24), so its artwork is not used.
-- **El Guardián del Código**: the narrator and mentor. Shown as a small calavera with a marigold crown in dialog boxes. Warm, playful, encouraging; gives hints, never answers.
+- **Rana (la jugadora)**: una rana original de 12×12 píxeles, dibujada a 2×. Ojos grandes y redondos, un `>_` amarillo en el pecho (un guiño a la terminal) y cachetes color cempasúchil. Cuadros: quieta, corriendo (2), saltando, agachada, golpeada y celebrando. Se ve distinta de la mascota de Strands Agents. No encontré lineamientos públicos de marca para esa mascota (strandsagents.com, 2026-10-24), así que no uso su arte.
+- **El Guardián del Código**: el narrador y mentor. Aparece como una calaverita con corona de cempasúchil en los cuadros de diálogo. Cálido, juguetón y alentador; da pistas, nunca respuestas.
 
-## 6. Palette
+## 6. Paleta
 
-| Name | Design hex | Use |
+| Nombre | Hex de diseño | Uso |
 |---|---|---|
-| Deep purple | `#21152E` | sky |
-| Near-black | `#0D0D0D` | UI background |
-| Cempasúchil | `#FF8C00` | path, flowers |
-| Marigold | `#F5E000` | accents, HUD, candles |
-| Frog green | `#65C84D` | player |
+| Morado profundo | `#21152E` | cielo |
+| Casi negro | `#0D0D0D` | fondo de la interfaz |
+| Cempasúchil | `#FF8C00` | camino, flores |
+| Amarillo cempasúchil | `#F5E000` | acentos, HUD, velas |
+| Verde rana | `#65C84D` | jugadora |
 | Magenta | `#D94F9B` | papel picado, calaveritas |
-| Bone white | `#F2E8D5` | text, skulls |
+| Blanco hueso | `#F2E8D5` | texto, calaveras |
 
-On the badge, colors are drawn through a palette table. Any design color that lands in the panel's bright low range gets remapped (e.g. near-black → `#000000`). The simulator shows the true design colors.
+En el badge, los colores pasan por una tabla de paleta. Cualquier color de diseño que caiga en los tonos oscuros que la pantalla muestra claros se reemplaza (por ejemplo, casi negro → `#000000`). El simulador muestra los colores de diseño reales.
 
-## 7. Challenges
+## 7. Retos
 
-Each flower opens a challenge: 1–3 lines of code, a question, 3 options, plus a **pista** entry.
+Cada flor abre un reto: 1 a 3 líneas de código, una pregunta, 3 opciones y una entrada de **pista**.
 
-| Flor | Concept | Snippet | Answer |
+| Flor | Concepto | Código | Respuesta |
 |---|---|---|---|
 | 1 | Variables | `let x = 5; x += 2; console.log(x);` | `7` |
 | 2 | Functions | `const double = n => n * 2; console.log(double(4));` | `8` |
 | 3 | Promises | `Promise.resolve("listo").then(console.log);` | `"listo"` |
 | 4 | Objects | `const frog = { name: "Kiro" }; console.log(frog.name);` | `"Kiro"` |
 
-Each concept has a second question for replays. The test suite **runs every snippet in Node** (`node:vm`, fake console) and checks that the marked answer is what JavaScript actually prints. The badge itself never executes code.
+Cada concepto tiene una segunda pregunta para cuando vuelves a jugar. Las pruebas **ejecutan cada código en Node** (`node:vm`, con una consola falsa) y verifican que la respuesta marcada es lo que JavaScript imprime de verdad. El badge nunca ejecuta código.
 
-Feedback texts come from the Guardián, for example:
-- Intro to a flower: *"Una promesa espera su destino. ¿Qué imprimirá este código?"*
-- Hint: *"Observa qué valor entrega Promise.resolve()."*
-- Correct: *"¡Excelente! Has iluminado otra flor del camino."*
+Los textos de respuesta los dice el Guardián, por ejemplo:
+- Al abrir una flor: *"Una promesa espera su destino. ¿Qué imprimirá este código?"*
+- Pista: *"Observa qué valor entrega Promise.resolve()."*
+- Correcta: *"¡Excelente! Has iluminado otra flor del camino."*
 
-## 8. Architecture
+## 8. Arquitectura
 
 ```
-src/core/gfx.ts          Gfx interface (fill, sprite, text) — implemented twice
-src/core/game/*.ts       pure TS: palette, sprites, questions, level, world, game, render
-sim/                     browser simulator: Canvas Gfx + keyboard, 428×142 ×3
-src/apps/ (badge)        Poco Gfx + buttons, launched from the Phase 1 menu
+src/core/gfx.ts          interfaz Gfx (fill, sprite, text), implementada dos veces
+src/core/game/*.ts       TS puro: paleta, sprites, preguntas, nivel, mundo, juego, render
+sim/                     simulador en el navegador: Gfx con Canvas + teclado, 428×142 ×3
+src/apps/ (badge)        Gfx con Poco + botones, se abre desde el menú de la Fase 1
 ```
 
-- `game.ts` is a deterministic state machine stepped at a fixed 60 Hz (`step(input)`), with no time or IO inside.
-- `render.ts` draws the current state through `Gfx` only, so the same file renders in the browser and on the badge.
-- Hardware adapters only translate: keyboard or buttons → input events, and `Gfx` calls → Canvas or Poco.
+- `game.ts` es una máquina de estados determinista que avanza a 60 Hz fijos (`step(input)`), sin tiempo ni E/S adentro.
+- `render.ts` dibuja el estado actual solo a través de `Gfx`, así que el mismo archivo dibuja en el navegador y en el badge.
+- Los adaptadores de hardware solo traducen: teclado o botones → eventos de entrada, y llamadas a `Gfx` → Canvas o Poco.
 
-## 9. Sound
+## 9. Sonido
 
-All sound is original and lives as data in `src/core/game/sound.ts`: each effect is a list of `[Hz, ms]` steps, one channel, so a piezo can play it.
+Todo el sonido es original y vive como datos en `src/core/game/sound.ts`: cada efecto es una lista de pasos `[Hz, ms]` en un solo canal, para que lo pueda tocar un piezo.
 
-| Event | When |
+| Evento | Cuándo |
 |---|---|
-| `jump` · `petal` · `hit` | run actions |
-| `flower` · `correct` · `wrong` | challenge |
-| `gameover` · `victory` | end states |
-| `move` · `select` | menus, pause, options |
+| `jump` · `petal` · `hit` | acciones en la carrera |
+| `flower` · `correct` · `wrong` | retos |
+| `gameover` · `victory` | finales |
+| `move` · `select` | menús, pausa, opciones |
 
-- **Run music**: a looping A-minor pentatonic lead over a walking bass at 140 bpm. Two voices in the simulator; a piezo would play the lead only.
-- **Simulator**: WebAudio, square waves for effects and a triangle wave for the bass. The **silencio** and **música** checkboxes control it, and audio starts on the first key press (browser policy).
-- **Badge**: no buzzer or speaker found (photos and stock firmware, see `docs/hardware.md`). The game still emits the events, and `src/apps/main.ts` drains them at the spot where a piezo adapter (LEDC PWM on a verified free GPIO) would go.
+- **Música de la carrera**: una melodía en bucle en escala pentatónica de La menor, sobre un bajo que camina a 140 bpm. Dos voces en el simulador; un piezo tocaría solo la melodía.
+- **Simulador**: WebAudio, con onda cuadrada para los efectos y triangular para el bajo. Se controla con las casillas **silencio** y **música**, y el audio empieza con la primera tecla (política del navegador).
+- **Badge**: no encontré buzzer ni bocina (fotos y firmware original, ver `docs/hardware.md`). El juego igual genera los eventos, y `src/apps/main.ts` los consume justo donde iría un adaptador para piezo (PWM con LEDC en un GPIO libre verificado).
 
-## 10. Phase 3 hook (later)
+## 10. Conexión con la Fase 3
 
-When online, the Guardián's lines and extra challenges can come from the AWS backend (`game.md` §6). In that mode the server keeps the answer and the badge submits an option id. Offline is always the default.
+Con red, las frases del Guardián y retos adicionales pueden venir del backend en AWS (`game.md` §6). En ese modo el servidor guarda la respuesta y el badge solo manda el id de la opción. El modo offline siempre es el predeterminado.
