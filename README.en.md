@@ -13,6 +13,12 @@ Developer Advocate @ AWS
 SERVERLESS · GENAI · LATAM
 ```
 
+## Demo
+
+[![Mictlán.js running on the badge: the frog runs along the cempasúchil path toward the pyramid](media/mictlan-badge.gif)](media/mictlan-badge.mp4)
+
+▶️ [Watch the full video](media/mictlan-badge.mp4) (2 min): business card, links and a Mictlán.js run on the badge.
+
 ## Status
 
 | Phase | What | State |
@@ -116,6 +122,7 @@ backend/         Phase 3: Lambda + Strands Harness + CDK stack
 scripts/         build-badge.sh (build only), provision-badge.py (NVS image)
 tests/           Vitest suites (badge core, game, simulator audio)
 docs/            hardware, architecture, game design, backup and recovery
+media/           demo video and GIF for the README
 ```
 
 ## Build and run
