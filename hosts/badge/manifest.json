@@ -162,17 +162,20 @@
 				"0x36, 1, 0x60,",
 				"kDelayMS, 0"
 			]
+		},
+		"xs": {
+			"abortHook": 1
 		}
 	},
 	"creation": {
 		"static": 0,
 		"chunk": {
-			"initial": 131072,
-			"incremental": 0
+			"initial": 78848,
+			"incremental": 16384
 		},
 		"heap": {
-			"initial": 8192,
-			"incremental": 0
+			"initial": 4928,
+			"incremental": 512
 		},
 		"stack": 512
 	}
